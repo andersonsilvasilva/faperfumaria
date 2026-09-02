@@ -1,11 +1,12 @@
 import { type ButtonHTMLAttributes, forwardRef } from "react";
 import Link from "next/link";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "secondary-inverse" | "ghost";
 
 const variantClasses: Record<Variant, string> = {
   primary: "bg-fa-black text-fa-white hover:bg-fa-gold hover:text-fa-black",
   secondary: "border border-fa-black text-fa-black hover:bg-fa-black hover:text-fa-white",
+  "secondary-inverse": "border border-fa-gold text-fa-gold hover:bg-fa-gold hover:text-fa-black",
   ghost: "text-fa-black hover:text-fa-gold",
 };
 
@@ -35,8 +36,18 @@ interface ButtonLinkProps {
 }
 
 export function ButtonLink({ href, variant = "primary", className = "", children }: ButtonLinkProps) {
+  const classes = `${baseClasses} ${variantClasses[variant]} ${className}`;
+
+  if (href.startsWith("http")) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={classes}>
+        {children}
+      </a>
+    );
+  }
+
   return (
-    <Link href={href} className={`${baseClasses} ${variantClasses[variant]} ${className}`}>
+    <Link href={href} className={classes}>
       {children}
     </Link>
   );

@@ -188,6 +188,7 @@ model Product {
   intensity         Intensity?
   fixation          String?
   projection        String?
+  concentration     String?
 
   isActive   Boolean @default(true)
   isFeatured Boolean @default(false)
