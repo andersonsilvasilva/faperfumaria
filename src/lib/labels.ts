@@ -1,4 +1,4 @@
-import type { Intensity, OrderStatus } from "@/generated/prisma/client";
+import type { Intensity, OrderStatus, ShippingMethod } from "@/generated/prisma/client";
 
 export const INTENSITY_LABELS: Record<Intensity, string> = {
   SUAVE: "Suave",
@@ -18,4 +18,10 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   CANCELLED: "Cancelado",
   PAYMENT_FAILED: "Falha no pagamento",
   REFUNDED: "Reembolsado",
+};
+
+export const SHIPPING_METHOD_LABELS: Record<ShippingMethod, string> = {
+  LOCAL_PICKUP: "Retirada na loja",
+  LOCAL_DELIVERY: "Entrega local",
+  NATIONAL: "Frete nacional",
 };

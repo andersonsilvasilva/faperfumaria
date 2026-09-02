@@ -53,6 +53,19 @@ Enum `OrderStatus` (`PENDING_PAYMENT`, `PAID`, `PREPARING`, `SHIPPED`, `DELIVERE
 `CANCELLED`, `PAYMENT_FAILED`, `REFUNDED`) — tradução amigável para o cliente fica na camada de
 apresentação, nunca no banco.
 
+Transições `PAID → PREPARING/CANCELLED`, `PREPARING → SHIPPED/CANCELLED` e `SHIPPED →
+DELIVERED` são feitas pelo Admin (`/admin/pedidos/[id]`, ver `docs/admin.md`); as demais
+(`PENDING_PAYMENT`, `PAID` inicial, `PAYMENT_FAILED`, `REFUNDED`) são consequência do fluxo de
+pagamento, não uma decisão manual.
+
+## Endereço de entrega
+
+O endereço digitado no checkout é salvo como snapshot direto no `Order`
+(`shippingZipCode`/`shippingStreet`/... — mesmo padrão de "snapshot" do `OrderItem`), não como
+`Address` vinculada, porque o checkout não exige conta. Sem isso, a loja teria pedido pago sem
+saber para onde enviar — corrigido junto com a Fase 5 (Admin/Pedidos), que é quem realmente
+precisa desse dado para preparar o envio.
+
 ## Pagamento e frete
 
 Ver `docs/integrations.md` para detalhes de implementação (providers, webhook, limitações

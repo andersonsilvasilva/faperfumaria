@@ -370,6 +370,16 @@ model Order {
   shippingMethod    ShippingMethod
   shippingLabel     String?
 
+  // Snapshot do endereço de entrega digitado no checkout (não depende de o cliente ter
+  // conta nem de uma Address salva — mesmo padrão de "snapshot" usado em OrderItem).
+  shippingZipCode      String?
+  shippingStreet       String?
+  shippingNumber       String?
+  shippingComplement   String?
+  shippingNeighborhood String?
+  shippingCity         String?
+  shippingState        String?
+
   subtotal      Decimal @db.Decimal(10, 2)
   discountTotal Decimal @db.Decimal(10, 2) @default(0)
   shippingTotal Decimal @db.Decimal(10, 2) @default(0)
