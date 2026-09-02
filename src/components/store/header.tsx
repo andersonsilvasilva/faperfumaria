@@ -98,11 +98,11 @@ export function Header() {
         <Link href="/" aria-label="FA Perfumaria — página inicial" className="flex items-center">
           <span className="relative block h-14 w-21 md:h-18 md:w-27">
             <Image
-              src="/brand/logo-fa-perfumaria-preta.jpg"
+              src="/brand/logo-fa-perfumaria-dourada.png"
               alt="FA Perfumaria"
               fill
               priority
-              className="rounded-sm object-contain shadow-md"
+              className="object-contain"
             />
           </span>
         </Link>
