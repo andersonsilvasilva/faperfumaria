@@ -25,8 +25,8 @@ export function HeroSection() {
 
         <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm shadow-xl">
           <Image
-            src="/brand/store-perfumes.jpg"
-            alt="Vitrine de perfumes selecionados pela FA Perfumaria"
+            src="/brand/hero-destaque.png"
+            alt="Perfume em destaque sobre mármore, com estante de fragrâncias ao fundo"
             fill
             priority
             className="object-cover"
