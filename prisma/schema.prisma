@@ -308,6 +308,8 @@ model Cart {
   userId        String?  @unique
   sessionToken  String?  @unique
   couponId      String?
+  giftWrap      Boolean  @default(false)
+  giftMessage   String?  @db.Text
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -372,6 +374,9 @@ model Order {
   discountTotal Decimal @db.Decimal(10, 2) @default(0)
   shippingTotal Decimal @db.Decimal(10, 2) @default(0)
   total         Decimal @db.Decimal(10, 2)
+
+  giftWrap    Boolean @default(false)
+  giftMessage String? @db.Text
 
   couponId String?
 

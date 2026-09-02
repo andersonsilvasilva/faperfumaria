@@ -55,9 +55,16 @@ normalmente).
 ## Seed
 
 `prisma/seed.ts` roda via `tsx` (configurado em `prisma.config.ts`), de forma idempotente
-(`upsert`). Cria um usuário `ADMIN` de desenvolvimento e um catálogo de exemplo (marcas,
-categorias, famílias olfativas, notas, tags de perfil e 12 produtos com variantes) — dados
-claramente de desenvolvimento, nunca usar em produção (seção 54 do `CLAUDE.md`).
+(`upsert`). Cria um usuário `ADMIN` de desenvolvimento, catálogo de exemplo (marcas, categorias,
+famílias olfativas, notas, tags de perfil e 12 produtos com variantes), o cupom `BEMVINDO10` e a
+configuração de frete local — dados claramente de desenvolvimento, nunca usar em produção
+(seção 54 do `CLAUDE.md`).
+
+**`ProductVariant` usa `upsert` por `sku`, nunca `deleteMany`+`createMany`** — diferente das
+outras entidades do catálogo. Motivo: assim que existem pedidos reais, `OrderItem` e
+`InventoryMovement` referenciam o `id` da variante; apagar e recriar quebra essas referências
+(erro de foreign key) e recriar com nova `stockQty` apagaria vendas/reservas reais. O `upsert`
+também **não sobrescreve `stockQty`** de uma variante já existente, só na criação inicial.
 
 ## Decisões de modelagem
 

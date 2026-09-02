@@ -7,6 +7,7 @@ import { getCartWithItems, calculateCartSubtotal } from "@/modules/cart/queries"
 import { CartItemRow } from "@/components/store/cart/cart-item-row";
 import { CouponForm } from "@/components/store/cart/coupon-form";
 import { ShippingCalculator } from "@/components/store/cart/shipping-calculator";
+import { GiftOptionsForm } from "@/components/store/cart/gift-options-form";
 
 export const metadata: Metadata = {
   title: "Carrinho",
@@ -76,6 +77,10 @@ export default async function CarrinhoPage() {
               }}
             />
           ))}
+
+          <div className="mt-6 border-t border-fa-stone/15 pt-6">
+            <GiftOptionsForm initialGiftWrap={cart!.giftWrap} initialGiftMessage={cart!.giftMessage ?? ""} />
+          </div>
         </div>
 
         <div className="space-y-6">

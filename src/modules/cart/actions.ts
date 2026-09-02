@@ -172,3 +172,33 @@ export async function removeCouponAction(): Promise<void> {
   await prisma.cart.update({ where: { id: cart.id }, data: { couponId: null } });
   revalidatePath("/carrinho");
 }
+
+const giftOptionsSchema = z.object({
+  giftWrap: z.literal("on").optional(),
+  giftMessage: z.string().trim().max(300).optional().default(""),
+});
+
+export async function updateGiftOptionsAction(
+  _prevState: CartActionState,
+  formData: FormData,
+): Promise<CartActionState> {
+  const parsed = giftOptionsSchema.safeParse({
+    giftWrap: formData.get("giftWrap") ?? undefined,
+    giftMessage: formData.get("giftMessage") ?? "",
+  });
+  if (!parsed.success) {
+    return { status: "error", message: "Não foi possível salvar as opções de presente." };
+  }
+
+  const cart = await getOrCreateCart();
+  await prisma.cart.update({
+    where: { id: cart.id },
+    data: {
+      giftWrap: parsed.data.giftWrap === "on",
+      giftMessage: parsed.data.giftWrap === "on" ? parsed.data.giftMessage : null,
+    },
+  });
+
+  revalidatePath("/carrinho");
+  return { status: "success" };
+}

@@ -1,19 +1,26 @@
 # Regras de comércio
 
-> Este documento evolui junto com as Fases 3 e 4 (Commerce e Cliente). Nesta fase (Fundação),
-> registra as regras já decididas na modelagem para que a implementação futura seja consistente.
+> Fase 3 (Commerce) implementada: carrinho, cupom, frete, checkout, pedido e pagamento (mock +
+> Mercado Pago real para PIX). Fluxo testado ponta a ponta com Playwright (não versionado —
+> scripts de verificação temporários, removidos após o uso).
 
 ## Estoque
 
 ```text
 Carrinho   → não altera estoque
-Pedido     → reserva temporária (InventoryMovement: RESERVATION)
-Pagamento aprovado   → confirma saída (InventoryMovement: SALE)
-Pagamento expirado/cancelado → libera reserva (InventoryMovement: RELEASE)
+Pedido     → reserva (InventoryMovement: RESERVATION) — decrementa ProductVariant.stockQty
+             na hora, dentro da mesma transação que cria o Order
+Pagamento aprovado   → confirma saída (InventoryMovement: SALE) — não decrementa de novo,
+                        só registra a movimentação (o estoque já saiu na reserva)
+Pagamento expirado/cancelado → EM ABERTO: ainda não há um job liberando o estoque reservado de
+                        pedidos PIX nunca pagos (InventoryMovement: RELEASE). Necessário antes
+                        de produção — hoje um PIX gerado e nunca pago prende o estoque
+                        indefinidamente.
 ```
 
-Nunca permitir overselling: qualquer alteração de `ProductVariant.stockQty` deve ser feita em
-transação, validando estoque disponível no momento da escrita (não confiar em leitura anterior).
+Overselling evitado via `updateMany({ where: { stockQty: { gte: quantity } }, data: {
+decrement } })` dentro de uma transação — atômico no nível de linha no MySQL/InnoDB, sem
+precisar de `SELECT ... FOR UPDATE` manual. Ver `src/modules/orders/actions.ts`.
 
 ## Preço e totais
 
@@ -44,7 +51,11 @@ apresentação, nunca no banco.
 
 ## Pagamento e frete
 
-Arquitetura de provider (interface `PaymentProvider` / `ShippingProvider`) para permitir modo
-mock em desenvolvimento sem credenciais reais. Implementação principal: Mercado Pago (pagamento)
-e provider abstrato de frete com retirada local, entrega local (Bombinhas, Porto Belo, Itapema)
-e frete nacional. Detalhes de configuração em `docs/integrations.md`.
+Ver `docs/integrations.md` para detalhes de implementação (providers, webhook, limitações
+atuais do pagamento por cartão).
+
+## Embrulho para presente
+
+`Cart.giftWrap` / `Cart.giftMessage` (editável na página do carrinho) são copiados para
+`Order.giftWrap` / `Order.giftMessage` na criação do pedido. Sem custo adicional — decisão
+deliberada para não introduzir uma sub-precificação nova nesta fase.

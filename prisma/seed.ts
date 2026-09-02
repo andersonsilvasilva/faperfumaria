@@ -503,17 +503,23 @@ async function seedCatalog() {
       })),
     });
 
-    await prisma.productVariant.deleteMany({ where: { productId: record.id } });
-    await prisma.productVariant.createMany({
-      data: product.variants.map((variant) => ({
-        productId: record.id,
-        volumeMl: variant.volumeMl,
-        sku: variant.sku,
-        price: variant.price,
-        stockQty: variant.stockQty,
-        minStockQty: 3,
-      })),
-    });
+    // upsert por SKU (não deleta/recria): variantes já podem estar referenciadas por pedidos
+    // reais (OrderItem/InventoryMovement) — recriá-las quebraria essas referências. Também não
+    // sobrescreve stockQty num produto já existente, para não apagar vendas/reservas reais.
+    for (const variant of product.variants) {
+      await prisma.productVariant.upsert({
+        where: { sku: variant.sku },
+        update: { volumeMl: variant.volumeMl, price: variant.price, minStockQty: 3 },
+        create: {
+          productId: record.id,
+          volumeMl: variant.volumeMl,
+          sku: variant.sku,
+          price: variant.price,
+          stockQty: variant.stockQty,
+          minStockQty: 3,
+        },
+      });
+    }
 
     await prisma.productImage.deleteMany({ where: { productId: record.id } });
     await prisma.productImage.create({
@@ -562,10 +568,23 @@ async function seedCoupon() {
   console.log("[seed] Cupom BEMVINDO10 pronto (10% OFF, pedido mínimo R$200).");
 }
 
+async function seedStoreSettings() {
+  await prisma.storeSetting.upsert({
+    where: { key: "local_delivery_pricing" },
+    update: {},
+    create: {
+      key: "local_delivery_pricing",
+      value: { Bombinhas: 15, "Porto Belo": 20, Itapema: 25 },
+    },
+  });
+  console.log("[seed] Configuração de entrega local pronta (Bombinhas/Porto Belo/Itapema).");
+}
+
 async function main() {
   await seedAdmin();
   await seedCatalog();
   await seedCoupon();
+  await seedStoreSettings();
 }
 
 main()
