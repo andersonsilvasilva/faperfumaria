@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { formatInstallments, formatPrice } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { addToCartAction, type CartActionState } from "@/modules/cart/actions";
+import { useFavorites } from "@/components/store/favorites/favorites-provider";
 
 export interface PlainVariant {
   id: string;
@@ -14,10 +16,23 @@ export interface PlainVariant {
 
 const initialState: CartActionState = { status: "idle" };
 
-export function VariantSelector({ variants }: { variants: PlainVariant[] }) {
+export function VariantSelector({ productId, variants }: { productId: string; variants: PlainVariant[] }) {
   const [selectedId, setSelectedId] = useState(variants[0]?.id);
   const [quantity, setQuantity] = useState(1);
   const [state, formAction, isPending] = useActionState(addToCartAction, initialState);
+  const { favoriteIds, toggle } = useFavorites();
+  const [isTogglingFavorite, startFavoriteTransition] = useTransition();
+  const router = useRouter();
+  const isFavorited = favoriteIds.has(productId);
+
+  function handleFavoriteClick() {
+    startFavoriteTransition(async () => {
+      const result = await toggle(productId);
+      if (result.status === "error" && result.message === "login-required") {
+        router.push(`/entrar?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+      }
+    });
+  }
 
   const selected = variants.find((variant) => variant.id === selectedId) ?? variants[0];
 
@@ -121,11 +136,14 @@ export function VariantSelector({ variants }: { variants: PlainVariant[] }) {
         </form>
         <button
           type="button"
-          disabled
-          title="Favoritos disponível na Fase 4"
-          className="rounded-sm border border-fa-black px-5 py-3 text-sm font-medium uppercase tracking-wide text-fa-black shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+          onClick={handleFavoriteClick}
+          disabled={isTogglingFavorite}
+          aria-pressed={isFavorited}
+          className={`rounded-sm border px-5 py-3 text-sm font-medium uppercase tracking-wide shadow-sm disabled:cursor-not-allowed disabled:opacity-50 ${
+            isFavorited ? "border-fa-gold text-fa-gold" : "border-fa-black text-fa-black"
+          }`}
         >
-          Favoritar
+          {isFavorited ? "Favoritado" : "Favoritar"}
         </button>
       </div>
       {state.status === "error" && <p className="mt-2 text-sm text-red-600">{state.message}</p>}

@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { formatPrice } from "@/lib/format";
+import { maskCep, maskCpf, maskPhone } from "@/lib/masks";
 import { Button } from "@/components/ui/button";
 import { createOrderAction, type CheckoutActionState } from "@/modules/orders/actions";
 import { calculateShippingAction, type ShippingCalcState } from "@/modules/shipping/actions";
@@ -41,9 +42,31 @@ export function CheckoutForm({
           <h2 className="font-display text-xl text-fa-black">Contato</h2>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Nome completo" name="contactName" required autoComplete="name" />
-            <Field label="CPF" name="contactCpf" required autoComplete="off" placeholder="000.000.000-00" />
+            <Field
+              label="CPF"
+              name="contactCpf"
+              required
+              autoComplete="off"
+              placeholder="000.000.000-00"
+              maxLength={14}
+              inputMode="numeric"
+              onInput={(e) => {
+                e.currentTarget.value = maskCpf(e.currentTarget.value);
+              }}
+            />
             <Field label="E-mail" name="contactEmail" type="email" required autoComplete="email" />
-            <Field label="WhatsApp" name="contactPhone" required autoComplete="tel" placeholder="(47) 90000-0000" />
+            <Field
+              label="WhatsApp"
+              name="contactPhone"
+              required
+              autoComplete="tel"
+              placeholder="(47) 90000-0000"
+              maxLength={15}
+              inputMode="numeric"
+              onInput={(e) => {
+                e.currentTarget.value = maskPhone(e.currentTarget.value);
+              }}
+            />
           </div>
         </section>
 
@@ -55,7 +78,11 @@ export function CheckoutForm({
               name="cep"
               placeholder="Seu CEP"
               maxLength={9}
+              inputMode="numeric"
               className="h-10 flex-1 rounded-sm border border-fa-stone/40 px-3 text-sm focus:border-fa-gold focus:outline-none"
+              onInput={(e) => {
+                e.currentTarget.value = maskCep(e.currentTarget.value);
+              }}
               onBlur={(e) => {
                 if (e.target.value.replace(/\D/g, "").length === 8) {
                   const fd = new FormData();

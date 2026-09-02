@@ -3,6 +3,7 @@ import Link from "next/link";
 import { formatInstallments, formatPrice } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { AddToCartButton } from "@/components/store/cart/add-to-cart-button";
+import { FavoriteButton } from "@/components/store/favorites/favorite-button";
 import type { ProductCardData } from "@/modules/catalog/queries";
 
 export function ProductCard({ product, priority = false }: { product: ProductCardData; priority?: boolean }) {
@@ -32,17 +33,10 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
         </div>
       </Link>
 
-      <button
-        type="button"
-        disabled
-        title="Favoritos disponível na Fase 4"
-        aria-label="Adicionar aos favoritos"
-        className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-fa-white/90 text-fa-black/60 shadow-sm disabled:cursor-not-allowed"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
-          <path d="M12 20s-7-4.35-9.5-8.5C.8 8.2 2.2 4.8 5.6 4.2c2-.35 3.9.6 5 2.3 1.1-1.7 3-2.65 5-2.3 3.4.6 4.8 4 3.1 7.3C19 15.65 12 20 12 20Z" />
-        </svg>
-      </button>
+      <FavoriteButton
+        productId={product.id}
+        className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-fa-white/90 text-fa-black/60 shadow-sm transition-colors hover:text-fa-gold disabled:cursor-not-allowed"
+      />
 
       <div className="flex flex-1 flex-col gap-1 p-4">
         <Badge variant="outline" className="w-fit normal-case tracking-normal">

@@ -115,6 +115,14 @@ export async function listProducts(params: ProductListParams = {}) {
   return { items, total, page, pageSize, pageCount: Math.max(1, Math.ceil(total / pageSize)) };
 }
 
+export async function getProductsByIds(ids: string[]) {
+  if (ids.length === 0) return [];
+  return prisma.product.findMany({
+    where: { id: { in: ids }, isActive: true },
+    include: productCardInclude,
+  });
+}
+
 export async function getFeaturedProducts(limit = 4) {
   return prisma.product.findMany({
     where: { isActive: true, isFeatured: true },

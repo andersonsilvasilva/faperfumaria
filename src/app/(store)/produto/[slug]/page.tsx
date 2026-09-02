@@ -6,7 +6,10 @@ import { ProductGallery } from "@/components/store/product/product-gallery";
 import { VariantSelector } from "@/components/store/product/variant-selector";
 import { FragrancePyramid } from "@/components/store/product/fragrance-pyramid";
 import { ProductCard } from "@/components/store/product-card";
+import { ReviewList } from "@/components/store/product/review-list";
+import { ReviewForm } from "@/components/store/product/review-form";
 import { getProductBySlug, getRelatedProducts } from "@/modules/catalog/queries";
+import { getProductReviews, getReviewSummary, getReviewEligibility } from "@/modules/reviews/queries";
 import { INTENSITY_LABELS } from "@/lib/labels";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/format";
@@ -42,7 +45,12 @@ export default async function ProdutoPage({
 
   if (!product) notFound();
 
-  const relatedProducts = await getRelatedProducts(product);
+  const [relatedProducts, reviews, reviewSummary, reviewEligibility] = await Promise.all([
+    getRelatedProducts(product),
+    getProductReviews(product.id),
+    getReviewSummary(product.id),
+    getReviewEligibility(product.id),
+  ]);
   const occasionTags = product.profileTags.filter((pt) => pt.tag.type === "OCCASION");
   const seasonTags = product.profileTags.filter((pt) => pt.tag.type === "SEASON");
   const personalityTags = product.profileTags.filter((pt) => pt.tag.type === "PERSONALITY");
@@ -102,6 +110,7 @@ export default async function ProdutoPage({
 
           <div className="mt-6">
             <VariantSelector
+              productId={product.id}
               variants={product.variants.map((variant) => ({
                 id: variant.id,
                 volumeMl: variant.volumeMl,
@@ -198,10 +207,14 @@ export default async function ProdutoPage({
 
         <section>
           <h2 className="font-display text-2xl text-fa-black">Avaliações</h2>
-          <div className="mt-4 border border-dashed border-fa-stone/40 py-10 text-center">
-            <p className="text-sm text-fa-black/60">
-              Ainda não há avaliações para este produto. As avaliações de clientes chegam na Fase 4.
-            </p>
+          <div className="mt-4">
+            <ReviewList reviews={reviews} average={reviewSummary.average} count={reviewSummary.count} />
+          </div>
+          <div className="mt-8 border-t border-fa-stone/15 pt-6">
+            <h3 className="font-display text-lg text-fa-black">Deixe sua avaliação</h3>
+            <div className="mt-3">
+              <ReviewForm productId={product.id} productSlug={product.slug} eligibility={reviewEligibility} />
+            </div>
           </div>
         </section>
 

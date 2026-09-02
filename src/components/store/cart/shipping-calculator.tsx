@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { formatPrice } from "@/lib/format";
+import { maskCep } from "@/lib/masks";
 import { calculateShippingAction, type ShippingCalcState } from "@/modules/shipping/actions";
 
 const initialState: ShippingCalcState = { status: "idle" };
@@ -22,6 +23,9 @@ export function ShippingCalculator() {
           inputMode="numeric"
           placeholder="Seu CEP"
           maxLength={9}
+          onInput={(e) => {
+            e.currentTarget.value = maskCep(e.currentTarget.value);
+          }}
           className="h-10 flex-1 rounded-sm border border-fa-stone/40 px-3 text-sm focus:border-fa-gold focus:outline-none"
         />
         <button
