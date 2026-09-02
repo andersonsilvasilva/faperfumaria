@@ -107,7 +107,16 @@ export function Footer() {
             © {new Date().getFullYear()} FA Perfumaria. Todos os direitos reservados.
           </p>
           <p className="text-xs text-fa-off-white/30">
-            © 2026 HighTech Tecnologia Ltda. Todos os direitos reservados.
+            ©{" "}
+            <a
+              href="https://hightechtecnologia.com.br/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-fa-off-white/60"
+            >
+              2026 HighTech Tecnologia Ltda
+            </a>
+            . Todos os direitos reservados.
           </p>
         </Container>
       </div>

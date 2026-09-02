@@ -90,20 +90,19 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-fa-gold/20 bg-fa-black/95 backdrop-blur">
-      <div className="hidden border-b border-fa-white/10 py-2 text-center text-xs tracking-wide text-fa-off-white/80 md:block">
+      <div className="hidden bg-fa-gold py-2 text-center text-xs font-medium tracking-wide text-fa-black md:block">
         Envios para todo o Brasil • Atendimento personalizado pelo WhatsApp
       </div>
 
       <Container className="flex h-20 items-center justify-between md:h-24">
         <Link href="/" aria-label="FA Perfumaria — página inicial" className="flex items-center">
-          <span className="flex items-center rounded-sm bg-fa-off-white px-3 py-2 shadow-md">
+          <span className="relative block h-14 w-21 md:h-18 md:w-27">
             <Image
-              src="/brand/logo-fa-perfumaria-transparente.png"
+              src="/brand/logo-fa-perfumaria-preta.jpg"
               alt="FA Perfumaria"
-              width={192}
-              height={128}
+              fill
               priority
-              className="h-12 w-auto md:h-16"
+              className="rounded-sm object-contain shadow-md"
             />
           </span>
         </Link>
