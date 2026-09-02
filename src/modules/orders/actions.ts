@@ -10,6 +10,7 @@ import { getShippingOptions } from "@/modules/shipping/provider";
 import { validateCoupon } from "@/modules/coupons/validate";
 import { generateOrderNumber } from "@/modules/orders/order-number";
 import { getPaymentProvider } from "@/modules/payments";
+import { sendOrderEmail } from "@/modules/email/send-order-email";
 
 export interface CheckoutActionState {
   status: "idle" | "error";
@@ -205,6 +206,8 @@ export async function createOrderAction(
     throw error;
   }
 
+  await sendOrderEmail(orderId, "ORDER_RECEIVED");
+
   // Pedido já criado e estoque reservado — problemas no pagamento a partir daqui não devem
   // apagar o pedido; o cliente pode tentar pagar novamente a partir da página de confirmação.
   try {
@@ -271,6 +274,7 @@ export async function createOrderAction(
             userId: session?.user?.id,
           })),
         });
+        await sendOrderEmail(orderId, "PAYMENT_APPROVED");
       }
     }
   } catch {
@@ -308,5 +312,6 @@ export async function simulatePixApprovalAction(orderNumber: string): Promise<vo
     }),
   ]);
 
+  await sendOrderEmail(order.id, "PAYMENT_APPROVED");
   revalidatePath(`/pedido/${orderNumber}`);
 }

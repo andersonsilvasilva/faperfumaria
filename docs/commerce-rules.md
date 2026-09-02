@@ -12,10 +12,14 @@ Pedido     → reserva (InventoryMovement: RESERVATION) — decrementa ProductVa
              na hora, dentro da mesma transação que cria o Order
 Pagamento aprovado   → confirma saída (InventoryMovement: SALE) — não decrementa de novo,
                         só registra a movimentação (o estoque já saiu na reserva)
-Pagamento expirado/cancelado → EM ABERTO: ainda não há um job liberando o estoque reservado de
-                        pedidos PIX nunca pagos (InventoryMovement: RELEASE). Necessário antes
-                        de produção — hoje um PIX gerado e nunca pago prende o estoque
-                        indefinidamente.
+Pagamento recusado/cancelado (webhook explícito) → o webhook do Mercado Pago já libera o
+                        estoque reservado (InventoryMovement: RELEASE) e envia e-mail ao
+                        cliente quando a notificação chega como REJECTED/CANCELLED.
+Pagamento nunca notificado → EM ABERTO: ainda não há um job liberando o estoque de pedidos PIX
+                        que nunca recebem NENHUMA notificação do Mercado Pago (QR code gerado e
+                        simplesmente abandonado pelo cliente, sem expiração/cancelamento
+                        explícitos). Necessário antes de produção — hoje esse caso específico
+                        ainda prende o estoque indefinidamente.
 ```
 
 Overselling evitado via `updateMany({ where: { stockQty: { gte: quantity } }, data: {

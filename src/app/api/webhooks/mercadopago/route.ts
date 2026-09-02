@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { WebhookSignatureValidator, InvalidWebhookSignatureError } from "mercadopago";
 import { prisma } from "@/lib/prisma";
 import { getPaymentProvider } from "@/modules/payments";
+import { sendOrderEmail } from "@/modules/email/send-order-email";
 
 /**
  * Webhook de notificações do Mercado Pago. Só faz efeito quando PAYMENT_PROVIDER=mercadopago
@@ -64,6 +65,32 @@ export async function POST(request: NextRequest) {
           })),
         }),
       ]);
+      await sendOrderEmail(order.id, "PAYMENT_APPROVED");
+    }
+  } else if (mappedStatus === "REJECTED" || mappedStatus === "CANCELLED") {
+    // Pagamento recusado/cancelado antes de ser aprovado — libera a reserva de estoque feita
+    // na criação do pedido (ver InventoryMovementType.RELEASE) e avisa o cliente por e-mail.
+    const order = await prisma.order.findUnique({ where: { id: payment.orderId }, include: { items: true } });
+    if (order && order.status === "PENDING_PAYMENT") {
+      const newStatus = mappedStatus === "REJECTED" ? "PAYMENT_FAILED" : "CANCELLED";
+      await prisma.$transaction([
+        prisma.order.update({ where: { id: order.id }, data: { status: newStatus } }),
+        ...order.items.map((item) =>
+          prisma.productVariant.update({
+            where: { id: item.variantId },
+            data: { stockQty: { increment: item.quantity } },
+          }),
+        ),
+        prisma.inventoryMovement.createMany({
+          data: order.items.map((item) => ({
+            variantId: item.variantId,
+            type: "RELEASE" as const,
+            quantity: item.quantity,
+            orderId: order.id,
+          })),
+        }),
+      ]);
+      await sendOrderEmail(order.id, mappedStatus === "REJECTED" ? "PAYMENT_FAILED" : "CANCELLED");
     }
   }
 
