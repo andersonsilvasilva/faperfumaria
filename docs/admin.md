@@ -62,8 +62,20 @@ ficam para uma fase futura — não criar agora para evitar complexidade sem uso
     configurado); substituição completa da lista a cada save (sem histórico dependente).
   - Excluir produto não existe como ação — "Desativar" (`isActive=false`) é a forma de remover
     um produto da vitrine sem arriscar quebrar FK de pedidos antigos.
-- **Clientes, Cupons, Banners, Newsletter, Configurações** — ainda não implementados
-  (placeholders na sidebar).
+- **Clientes** (`/admin/clientes`, `.../[id]`) — somente leitura: lista com busca, total gasto
+  e nº de pedidos (calculados a partir de pedidos pagos); detalhe mostra endereços e histórico
+  de pedidos. Não há criação/edição de cliente pelo Admin (conta é sempre self-service).
+- **Cupons** (`/admin/cupons`, `.../novo`, `.../[id]`) — CRUD completo. Restrição por categoria
+  é checkbox; por produto é uma lista de nomes exatos separados por vírgula (sem
+  autocomplete/multi-select nesta fase — catálogo pequeno o suficiente para digitar o nome).
+- **Banners** (`/admin/banners`, `.../novo`, `.../[id]`) — CRUD completo. Mesma decisão de
+  "Imagens" dos produtos: URL colada, sem upload de arquivo.
+- **Newsletter** (`/admin/newsletter`) — somente leitura: lista de inscritos com opt-in de
+  marketing, origem e data.
+- **Configurações** (`/admin/configuracoes`) — editor genérico de `StoreSetting` (chave + valor
+  JSON em textarea), em vez de uma tela dedicada por configuração — hoje só existe
+  `local_delivery_pricing` (ver `docs/integrations.md`), e novas configurações futuras não
+  exigem uma nova tela, só uma nova chave.
 
 ## Auditoria
 
