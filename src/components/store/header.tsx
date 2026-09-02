@@ -94,15 +94,15 @@ export function Header() {
         Envios para todo o Brasil • Atendimento personalizado pelo WhatsApp
       </div>
 
-      <Container className="flex h-16 items-center justify-between md:h-20">
+      <Container className="flex h-20 items-center justify-between md:h-24">
         <Link href="/" aria-label="FA Perfumaria — página inicial" className="flex items-center">
           <Image
-            src="/brand/logo-fa-perfumaria.jpg"
+            src="/brand/logo-fa-perfumaria-transparente.png"
             alt="FA Perfumaria"
-            width={140}
-            height={70}
+            width={192}
+            height={128}
             priority
-            className="h-10 w-auto md:h-12"
+            className="h-14 w-auto md:h-18"
           />
         </Link>
 
