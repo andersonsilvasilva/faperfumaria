@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FA Perfumaria — E-commerce
 
-## Getting Started
+E-commerce premium da FA Perfumaria (Bombinhas/SC). Next.js (App Router) + TypeScript + Tailwind CSS + Prisma/MySQL.
 
-First, run the development server:
+Especificação completa do produto: [`CLAUDE.md`](./CLAUDE.md).
+
+## Stack
+
+- **Next.js 16** (App Router, Turbopack) + React 19 + TypeScript
+- **Tailwind CSS v4** (tokens de marca em `src/app/globals.css`)
+- **Prisma 7** + MySQL, com driver adapter `@prisma/adapter-mariadb`
+- **Auth.js (next-auth v5)** — login por credenciais (e-mail/senha), sessão JWT
+- **Zod** + **React Hook Form** para validação de formulários
+
+## Requisitos
+
+- Node.js 20.9+ (recomendado 22+)
+- Acesso a um banco MySQL/MariaDB (ver `DATABASE_URL`)
+
+## Instalação
+
+```bash
+npm install
+cp .env.example .env
+# preencha DATABASE_URL, AUTH_SECRET e demais variáveis em .env
+```
+
+Gere um `AUTH_SECRET` seguro com:
+
+```bash
+openssl rand -base64 32
+```
+
+## Banco de dados
+
+O schema fica em [`prisma/schema.prisma`](./prisma/schema.prisma). Detalhes de modelagem e do fluxo de migrations em [`docs/database.md`](./docs/database.md).
+
+```bash
+npx prisma generate      # gera o client em src/generated/prisma
+npx prisma migrate deploy  # aplica as migrations existentes
+```
+
+Para criar uma nova migration em desenvolvimento, veja o fluxo específico (sem shadow database) documentado em `docs/database.md` — o host atual não permite `CREATE DATABASE`, então `prisma migrate dev` não funciona diretamente.
+
+## Seed
+
+```bash
+npm run db:seed
+```
+
+Cria (de forma idempotente) um usuário administrador de desenvolvimento. Credenciais configuráveis via `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` (senão usa um padrão de dev, exibido no console).
+
+## Executar em desenvolvimento
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script | Descrição |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento (Turbopack) |
+| `npm run build` | Build de produção |
+| `npm run start` | Sobe o build de produção |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | Checagem de tipos (`tsc --noEmit`) |
+| `npm run prisma:generate` | Gera o Prisma Client |
+| `npm run db:push` | Sincroniza o schema sem migrations (prototipagem) |
+| `npm run db:seed` | Roda o seed de desenvolvimento |
 
-## Learn More
+## Build e deploy
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+npm run start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Ver [`docs/deployment.md`](./docs/deployment.md) para notas específicas do ambiente de hospedagem (Hostinger).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Estrutura
 
-## Deploy on Vercel
+Ver [`docs/architecture.md`](./docs/architecture.md).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Documentação
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [`docs/architecture.md`](./docs/architecture.md) — organização de pastas e camadas
+- [`docs/database.md`](./docs/database.md) — modelagem, migrations, seed
+- [`docs/commerce-rules.md`](./docs/commerce-rules.md) — regras de estoque, pedido, cupom, pagamento
+- [`docs/admin.md`](./docs/admin.md) — painel administrativo e papéis de acesso
+- [`docs/deployment.md`](./docs/deployment.md) — hospedagem e variáveis de produção
+- [`docs/integrations.md`](./docs/integrations.md) — pagamento, frete, e-mail e analytics
