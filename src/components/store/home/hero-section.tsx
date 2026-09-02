@@ -23,14 +23,31 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm shadow-xl">
-          <Image
-            src="/brand/hero-destaque.png"
-            alt="Perfume em destaque sobre mármore, com estante de fragrâncias ao fundo"
-            fill
-            priority
-            className="object-cover"
-            sizes="(min-width: 768px) 50vw, 100vw"
+        <div className="relative">
+          {/* brilho dourado suave atrás da imagem */}
+          <div
+            aria-hidden
+            className="absolute -inset-8 -z-10 rounded-full bg-fa-gold/25 blur-3xl"
+          />
+
+          <div className="relative aspect-4/5 w-full overflow-hidden rounded-sm shadow-[0_40px_70px_-20px_rgba(11,11,11,0.45)] ring-1 ring-fa-gold/20">
+            <Image
+              src="/brand/hero-destaque.png"
+              alt="Perfume em destaque sobre mármore, com estante de fragrâncias ao fundo"
+              fill
+              priority
+              className="object-cover"
+              sizes="(min-width: 768px) 50vw, 100vw"
+            />
+            {/* sombreamento sutil para dar profundidade sem competir com o produto */}
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-fa-black/30 via-transparent to-fa-black/10" />
+            <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-fa-white/10" />
+          </div>
+
+          {/* sombra de contato no "chão", reforçando a sensação de profundidade */}
+          <div
+            aria-hidden
+            className="absolute -bottom-6 left-1/2 h-10 w-4/5 -translate-x-1/2 rounded-full bg-fa-black/25 blur-2xl"
           />
         </div>
       </Container>

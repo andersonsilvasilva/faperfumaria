@@ -15,7 +15,7 @@
   --color-fa-stone: #9d9c94;
 
   --font-display: var(--font-playfair), "Cormorant Garamond", serif;
-  --font-sans: var(--font-inter), "Manrope", sans-serif;
+  --font-sans: var(--font-montserrat), "Manrope", sans-serif;
 }
 
 :root {
