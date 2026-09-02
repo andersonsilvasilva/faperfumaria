@@ -6,10 +6,10 @@ export function GiftsSection() {
   return (
     <section className="py-16">
       <Container className="grid items-center gap-10 md:grid-cols-2">
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm">
+        <div className="relative aspect-4/3 w-full overflow-hidden rounded-sm shadow-lg">
           <Image
-            src="/brand/texture-wood.jpg"
-            alt="Textura de madeira — kits e presentes FA Perfumaria"
+            src="/brand/kits-presentes.png"
+            alt="Kit de perfumes selecionados, em bandeja dourada com laço de presente"
             fill
             className="object-cover"
             sizes="(min-width: 768px) 50vw, 100vw"

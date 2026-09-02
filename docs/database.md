@@ -6,13 +6,33 @@ forma padrão do Prisma 7 para MySQL/MariaDB; ver `.claude/skills/prisma-databas
 Client gerado em `src/generated/prisma` (path customizado no generator, não versionado).
 Singleton de conexão em `src/lib/prisma.ts`.
 
-## Particularidade do hosting atual: sem shadow database
+## Ambientes: local (Laragon) vs. remoto (Hostinger)
 
-O banco de produção/desenvolvimento atual está na Hostinger (hospedagem compartilhada). O
-usuário do banco **não tem permissão `CREATE DATABASE`**, então `prisma migrate dev` falha
-(ele precisa criar um shadow database temporário para calcular o diff).
+Desenvolvimento do dia a dia usa **MySQL local via Laragon** (`DATABASE_URL` apontando para
+`127.0.0.1:3306`, banco `fa_perfumaria`, usuário `root` sem senha). Motivo: o banco remoto da
+Hostinger é uma conta de hospedagem compartilhada com um limite baixo de conexões simultâneas
+por usuário — reinícios repetidos do `next dev` (comuns durante o desenvolvimento) esgotaram
+esse limite (`ER_USER_LIMIT_REACHED`) e derrubaram o site em pleno teste. Local não tem esse
+problema e é bem mais rápido.
 
-Fluxo usado para criar a migration inicial, sem shadow database:
+Com MySQL local (usuário `root` com privilégios completos), o fluxo normal do Prisma funciona
+sem restrições: `prisma migrate dev` funciona de verdade (cria shadow database sem problema).
+As migrations continuam as mesmas — foram criadas contra o banco remoto pelo fluxo abaixo, mas
+`prisma migrate deploy` as aplica normalmente em qualquer banco (local ou remoto), sem precisar
+de shadow database.
+
+O banco remoto da Hostinger continua sendo o de produção — usar `prisma migrate deploy` (nunca
+`migrate dev`) para aplicar migrations nele, e trocar o `DATABASE_URL` só na hora do deploy (ver
+`docs/deployment.md`). Não usar o banco remoto para desenvolvimento/testes do dia a dia.
+
+## Particularidade do hosting Hostinger: sem shadow database
+
+O usuário do banco remoto **não tem permissão `CREATE DATABASE`**, então `prisma migrate dev`
+falha lá (ele precisa criar um shadow database temporário para calcular o diff) — só afeta o
+banco remoto; localmente isso não é um problema (ver seção acima).
+
+Fluxo usado para criar/alterar migrations quando só o banco remoto está disponível (sem shadow
+database):
 
 ```bash
 # 1. gera o SQL comparando "vazio" com o schema atual (não toca no banco)
@@ -34,10 +54,10 @@ normalmente).
 
 ## Seed
 
-`prisma/seed.ts` roda via `tsx` (configurado em `prisma.config.ts`). Hoje cria apenas um
-usuário `ADMIN` de desenvolvimento, de forma idempotente (`upsert` por e-mail). Dados de
-catálogo (marcas, categorias, produtos, variantes, notas olfativas) serão adicionados na
-Fase 2, junto com o storefront que os consome.
+`prisma/seed.ts` roda via `tsx` (configurado em `prisma.config.ts`), de forma idempotente
+(`upsert`). Cria um usuário `ADMIN` de desenvolvimento e um catálogo de exemplo (marcas,
+categorias, famílias olfativas, notas, tags de perfil e 12 produtos com variantes) — dados
+claramente de desenvolvimento, nunca usar em produção (seção 54 do `CLAUDE.md`).
 
 ## Decisões de modelagem
 
