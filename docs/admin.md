@@ -36,8 +36,34 @@ ficam para uma fase futura — não criar agora para evitar complexidade sem uso
 - **Estoque** (`/admin/estoque`) — implementado: lista de variantes com destaque de estoque
   baixo (`stockQty <= minStockQty`, filtrado em memória — catálogo pequeno, não precisa de SQL
   cru) e ajuste manual (`+`/`-`) que grava `InventoryMovementType.ADJUSTMENT`.
-- **Produtos, Categorias, Marcas, Clientes, Cupons, Banners, Newsletter, Configurações** —
-  ainda não implementados (placeholders na sidebar).
+- **Categorias** (`/admin/categorias`) e **Marcas** (`/admin/marcas`) — CRUD simples (criar,
+  editar, excluir). Categoria suporta hierarquia (`parentId`); excluir uma categoria com filhas
+  só desvincula (`SetNull`), não bloqueia. **Marca com produtos vinculados não pode ser
+  excluída** (`Product.brandId` é obrigatório, sem cascade) — o delete falha silenciosamente e a
+  linha continua na lista, o que já é sinal suficiente para uso interno; não há upload de
+  arquivo para o logo, só uma URL colada (mesma decisão de "Imagens" abaixo).
+- **Produtos** (`/admin/produtos`, `.../novo`, `.../[id]`) — formulário único em seções
+  (Informações/Preço/Fragrância/Variantes/Imagens/SEO), em
+  `src/components/admin/products/product-form.tsx` +
+  `src/modules/admin/products-actions.ts`. Pontos importantes:
+  - Notas de fragrância são digitadas como texto separado por vírgula por camada (saída/
+    coração/fundo); ao salvar, cada nome é `upsert`ado em `FragranceNote` (nome é único) e as
+    linhas de `ProductFragranceNote` daquela camada são recriadas do zero.
+  - Categorias e tags de perfil (ocasião/estação/personalidade) são checkboxes; substituição
+    completa das linhas de junção a cada save (sem histórico dependente, seguro).
+  - **Variantes nunca são apagadas** por este formulário — só atualizadas (se já têm `id`) ou
+    criadas (se novas), porque `OrderItem`/`InventoryMovement` podem referenciar o `id` de uma
+    variante existente (mesma lição do seed, ver `docs/database.md`). Uma variante "removida"
+    pelo admin deve ser desativada (`isActive=false`), não excluída.
+  - **Estoque inicial de uma variante nova é sempre 0** — o formulário de produto não grava
+    `stockQty` diretamente; o admin ajusta em `/admin/estoque` logo depois, para manter uma
+    única trilha de auditoria (`InventoryMovement`) para toda mudança de estoque.
+  - **Imagens não têm upload de arquivo** — apenas URL colada (nesta fase, sem storage
+    configurado); substituição completa da lista a cada save (sem histórico dependente).
+  - Excluir produto não existe como ação — "Desativar" (`isActive=false`) é a forma de remover
+    um produto da vitrine sem arriscar quebrar FK de pedidos antigos.
+- **Clientes, Cupons, Banners, Newsletter, Configurações** — ainda não implementados
+  (placeholders na sidebar).
 
 ## Auditoria
 
