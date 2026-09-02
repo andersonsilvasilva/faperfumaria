@@ -62,6 +62,12 @@ ficam para uma fase futura — não criar agora para evitar complexidade sem uso
     configurado); substituição completa da lista a cada save (sem histórico dependente).
   - Excluir produto não existe como ação — "Desativar" (`isActive=false`) é a forma de remover
     um produto da vitrine sem arriscar quebrar FK de pedidos antigos.
+- **Avaliações** (`/admin/avaliacoes`) — moderação de avaliações de produto (seção 37 do
+  CLAUDE.md): lista todas as avaliações (qualquer produto), com busca e filtro de status,
+  permitindo apenas ocultar/reexibir (`toggleReviewVisibilityAction`) — **nunca edita nota ou
+  comentário do cliente**. Avaliações continuam sendo aprovadas automaticamente ao serem
+  enviadas (compra verificada já é exigida em `getReviewEligibility`); esta tela é uma rede de
+  segurança para remover spam depois, não uma fila de pré-aprovação.
 - **Clientes** (`/admin/clientes`, `.../[id]`) — somente leitura: lista com busca, total gasto
   e nº de pedidos (calculados a partir de pedidos pagos); detalhe mostra endereços e histórico
   de pedidos. Não há criação/edição de cliente pelo Admin (conta é sempre self-service).

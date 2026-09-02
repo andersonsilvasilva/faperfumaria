@@ -1,4 +1,4 @@
-import type { Intensity, OrderStatus, ShippingMethod } from "@/generated/prisma/client";
+import type { Intensity, OrderStatus, ReviewStatus, ShippingMethod } from "@/generated/prisma/client";
 
 export const INTENSITY_LABELS: Record<Intensity, string> = {
   SUAVE: "Suave",
@@ -24,4 +24,10 @@ export const SHIPPING_METHOD_LABELS: Record<ShippingMethod, string> = {
   LOCAL_PICKUP: "Retirada na loja",
   LOCAL_DELIVERY: "Entrega local",
   NATIONAL: "Frete nacional",
+};
+
+export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
+  PENDING: "Pendente",
+  APPROVED: "Visível",
+  HIDDEN: "Oculta",
 };
