@@ -89,28 +89,30 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-fa-stone/20 bg-fa-off-white/95 backdrop-blur">
-      <div className="hidden bg-fa-black py-2 text-center text-xs tracking-wide text-fa-off-white md:block">
+    <header className="sticky top-0 z-50 border-b border-fa-gold/20 bg-fa-black/95 backdrop-blur">
+      <div className="hidden border-b border-fa-white/10 py-2 text-center text-xs tracking-wide text-fa-off-white/80 md:block">
         Envios para todo o Brasil • Atendimento personalizado pelo WhatsApp
       </div>
 
       <Container className="flex h-20 items-center justify-between md:h-24">
         <Link href="/" aria-label="FA Perfumaria — página inicial" className="flex items-center">
-          <Image
-            src="/brand/logo-fa-perfumaria-transparente.png"
-            alt="FA Perfumaria"
-            width={192}
-            height={128}
-            priority
-            className="h-14 w-auto md:h-18"
-          />
+          <span className="flex items-center rounded-sm bg-fa-off-white px-3 py-2 shadow-md">
+            <Image
+              src="/brand/logo-fa-perfumaria-transparente.png"
+              alt="FA Perfumaria"
+              width={192}
+              height={128}
+              priority
+              className="h-12 w-auto md:h-16"
+            />
+          </span>
         </Link>
 
         <nav aria-label="Navegação principal" className="hidden items-center gap-7 lg:flex">
           <div className="group relative">
             <Link
               href="/loja"
-              className="text-sm font-medium tracking-wide text-fa-black transition-colors hover:text-fa-gold"
+              className="text-sm font-medium tracking-wide text-fa-off-white transition-colors hover:text-fa-gold"
             >
               Perfumes
             </Link>
@@ -138,14 +140,14 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium tracking-wide text-fa-black transition-colors hover:text-fa-gold"
+                className="text-sm font-medium tracking-wide text-fa-off-white transition-colors hover:text-fa-gold"
               >
                 {item.label}
               </Link>
             ))}
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 text-fa-off-white">
           <Link href="/buscar" aria-label="Buscar" className="hidden hover:text-fa-gold sm:block">
             <SearchIcon />
           </Link>

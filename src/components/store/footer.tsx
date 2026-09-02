@@ -102,9 +102,12 @@ export function Footer() {
       </Container>
 
       <div className="border-t border-fa-off-white/10 py-5">
-        <Container>
-          <p className="text-center text-xs text-fa-off-white/50">
+        <Container className="space-y-1 text-center">
+          <p className="text-xs text-fa-off-white/50">
             © {new Date().getFullYear()} FA Perfumaria. Todos os direitos reservados.
+          </p>
+          <p className="text-xs text-fa-off-white/30">
+            © 2026 HighTech Tecnologia Ltda. Todos os direitos reservados.
           </p>
         </Container>
       </div>

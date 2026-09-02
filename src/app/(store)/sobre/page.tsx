@@ -18,8 +18,8 @@ export default function SobrePage() {
 
       <div className="relative mt-8 aspect-16/9 w-full overflow-hidden rounded-sm shadow-lg">
         <Image
-          src="/brand/store-perfumes.jpg"
-          alt="Vitrine da FA Perfumaria"
+          src="/brand/sobre-fa.png"
+          alt="Perfumes FA Perfumaria em composição de mármore, com a marca em destaque na parede"
           fill
           className="object-cover"
           sizes="768px"
