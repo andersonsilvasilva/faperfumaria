@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Container } from "@/components/ui/container";
@@ -87,6 +88,28 @@ function MenuIcon({ open }: { open: boolean }) {
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function refreshCount() {
+      fetch("/api/cart/count")
+        .then((res) => res.json())
+        .then((data) => {
+          if (!cancelled) setCartCount(data.count ?? 0);
+        })
+        .catch(() => {});
+    }
+
+    refreshCount();
+    window.addEventListener("cart:updated", refreshCount);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("cart:updated", refreshCount);
+    };
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-fa-gold/20 bg-fa-black/95 backdrop-blur">
@@ -156,8 +179,13 @@ export function Header() {
           <Link href="/minha-conta" aria-label="Minha conta" className="hidden hover:text-fa-gold sm:block">
             <UserIcon />
           </Link>
-          <Link href="/carrinho" aria-label="Carrinho" className="hover:text-fa-gold">
+          <Link href="/carrinho" aria-label="Carrinho" className="relative hover:text-fa-gold">
             <BagIcon />
+            {cartCount > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-fa-gold px-1 text-[10px] font-bold text-fa-black">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
           </Link>
           <button
             type="button"

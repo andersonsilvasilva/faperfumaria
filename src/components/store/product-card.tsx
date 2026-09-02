@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatInstallments, formatPrice } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { AddToCartButton } from "@/components/store/cart/add-to-cart-button";
 import type { ProductCardData } from "@/modules/catalog/queries";
 
 export function ProductCard({ product, priority = false }: { product: ProductCardData; priority?: boolean }) {
@@ -65,14 +66,13 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
         </div>
         <p className="text-xs text-fa-black/50">{formatInstallments(product.price)}</p>
 
-        <button
-          type="button"
-          disabled
-          title="Carrinho disponível na Fase 3"
-          className="mt-3 w-full rounded-sm border border-fa-black py-2 text-xs font-medium uppercase tracking-wide text-fa-black/50 shadow-sm disabled:cursor-not-allowed"
-        >
-          Adicionar ao carrinho
-        </button>
+        {firstVariant && (
+          <AddToCartButton
+            variantId={firstVariant.id}
+            disabled={firstVariant.stockQty <= 0}
+            className="mt-3 w-full rounded-sm border border-fa-black py-2 text-xs font-medium uppercase tracking-wide text-fa-black shadow-sm transition-colors hover:bg-fa-black hover:text-fa-white disabled:cursor-not-allowed disabled:opacity-50"
+          />
+        )}
       </div>
     </div>
   );

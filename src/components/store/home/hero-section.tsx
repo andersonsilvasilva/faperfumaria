@@ -9,7 +9,9 @@ export function HeroSection() {
         <div>
           <p className="text-xs font-semibold tracking-[0.2em] text-fa-gold uppercase">FA Perfumaria</p>
           <h1 className="mt-4 font-display text-4xl leading-tight text-fa-black md:text-5xl">
-            Sua presença começa pela essência.
+            Sua presença começa pela
+            <br />
+            essência.
           </h1>
           <p className="mt-6 max-w-md text-fa-black/70">
             Fragrâncias escolhidas para quem entende que um perfume vai além do aroma. Ele revela

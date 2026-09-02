@@ -547,9 +547,25 @@ async function seedCatalog() {
   console.log(`[seed] Catálogo pronto: ${BRANDS.length} marcas, ${PRODUCTS.length} produtos.`);
 }
 
+async function seedCoupon() {
+  await prisma.coupon.upsert({
+    where: { code: "BEMVINDO10" },
+    update: {},
+    create: {
+      code: "BEMVINDO10",
+      type: "PERCENTAGE",
+      value: 10,
+      minOrderValue: 200,
+      isActive: true,
+    },
+  });
+  console.log("[seed] Cupom BEMVINDO10 pronto (10% OFF, pedido mínimo R$200).");
+}
+
 async function main() {
   await seedAdmin();
   await seedCatalog();
+  await seedCoupon();
 }
 
 main()
