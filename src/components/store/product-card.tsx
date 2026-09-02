@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatInstallments, formatPrice } from "@/lib/format";
+import { Badge } from "@/components/ui/badge";
 import type { ProductCardData } from "@/modules/catalog/queries";
 
 export function ProductCard({ product, priority = false }: { product: ProductCardData; priority?: boolean }) {
@@ -9,7 +10,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
   const hasOffer = product.compareAtPrice != null;
 
   return (
-    <div className="group relative flex flex-col border border-fa-stone/15 bg-fa-white">
+    <div className="group relative flex flex-col overflow-hidden rounded-sm border border-fa-stone/15 bg-fa-white shadow-[0_15px_35px_-20px_rgba(11,11,11,0.35)] transition-shadow duration-300 hover:shadow-[0_25px_45px_-20px_rgba(11,11,11,0.45)]">
       <Link href={`/produto/${product.slug}`} className="block">
         <div className="relative aspect-square w-full overflow-hidden bg-fa-off-white">
           {mainImage && (
@@ -23,9 +24,9 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
             />
           )}
           {hasOffer && (
-            <span className="absolute left-3 top-3 bg-fa-gold px-2 py-1 text-xs font-semibold uppercase tracking-wide text-fa-black">
+            <Badge variant="gold" className="absolute left-3 top-3">
               Oferta
-            </span>
+            </Badge>
           )}
         </div>
       </Link>
@@ -35,7 +36,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
         disabled
         title="Favoritos disponível na Fase 4"
         aria-label="Adicionar aos favoritos"
-        className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-fa-white/90 text-fa-black/60 disabled:cursor-not-allowed"
+        className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-fa-white/90 text-fa-black/60 shadow-sm disabled:cursor-not-allowed"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
           <path d="M12 20s-7-4.35-9.5-8.5C.8 8.2 2.2 4.8 5.6 4.2c2-.35 3.9.6 5 2.3 1.1-1.7 3-2.65 5-2.3 3.4.6 4.8 4 3.1 7.3C19 15.65 12 20 12 20Z" />
@@ -43,8 +44,13 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
       </button>
 
       <div className="flex flex-1 flex-col gap-1 p-4">
-        <p className="text-xs uppercase tracking-wide text-fa-black/50">{product.brand.name}</p>
-        <Link href={`/produto/${product.slug}`} className="font-display text-base text-fa-black hover:text-fa-gold">
+        <Badge variant="outline" className="w-fit normal-case tracking-normal">
+          {product.brand.name}
+        </Badge>
+        <Link
+          href={`/produto/${product.slug}`}
+          className="mt-1 font-display text-base text-fa-black hover:text-fa-gold"
+        >
           {product.name}
         </Link>
         {firstVariant && <p className="text-xs text-fa-black/50">{firstVariant.volumeMl}ml</p>}
@@ -63,7 +69,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
           type="button"
           disabled
           title="Carrinho disponível na Fase 3"
-          className="mt-3 w-full border border-fa-black py-2 text-xs font-medium uppercase tracking-wide text-fa-black/50 disabled:cursor-not-allowed"
+          className="mt-3 w-full rounded-sm border border-fa-black py-2 text-xs font-medium uppercase tracking-wide text-fa-black/50 shadow-sm disabled:cursor-not-allowed"
         >
           Adicionar ao carrinho
         </button>

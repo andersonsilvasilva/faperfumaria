@@ -7,13 +7,9 @@ import { VariantSelector } from "@/components/store/product/variant-selector";
 import { FragrancePyramid } from "@/components/store/product/fragrance-pyramid";
 import { ProductCard } from "@/components/store/product-card";
 import { getProductBySlug, getRelatedProducts } from "@/modules/catalog/queries";
-
-const INTENSITY_LABELS: Record<string, string> = {
-  SUAVE: "Suave",
-  MODERADA: "Moderada",
-  MARCANTE: "Marcante",
-  INTENSA: "Intensa",
-};
+import { INTENSITY_LABELS } from "@/lib/labels";
+import { Badge } from "@/components/ui/badge";
+import { formatPrice } from "@/lib/format";
 
 export async function generateMetadata({
   params,
@@ -50,6 +46,11 @@ export default async function ProdutoPage({
   const occasionTags = product.profileTags.filter((pt) => pt.tag.type === "OCCASION");
   const seasonTags = product.profileTags.filter((pt) => pt.tag.type === "SEASON");
   const personalityTags = product.profileTags.filter((pt) => pt.tag.type === "PERSONALITY");
+  const whenToUseTags = [...occasionTags, ...seasonTags];
+
+  const discountPercent = product.compareAtPrice
+    ? Math.round((1 - Number(product.price.toString()) / Number(product.compareAtPrice.toString())) * 100)
+    : null;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -84,8 +85,20 @@ export default async function ProdutoPage({
         <ProductGallery images={product.images} productName={product.name} />
 
         <div>
-          <p className="text-xs uppercase tracking-wide text-fa-black/50">{product.brand.name}</p>
-          <h1 className="mt-1 font-display text-3xl text-fa-black">{product.name}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="dark">{product.brand.name}</Badge>
+            {product.olfactoryFamily && <Badge variant="outline">{product.olfactoryFamily.name}</Badge>}
+            {product.intensity && <Badge variant="outline">{INTENSITY_LABELS[product.intensity]}</Badge>}
+            {discountPercent !== null && discountPercent > 0 && (
+              <Badge variant="gold">-{discountPercent}% OFF</Badge>
+            )}
+          </div>
+          <h1 className="mt-3 font-display text-3xl text-fa-black">{product.name}</h1>
+          {discountPercent !== null && (
+            <p className="mt-1 text-sm text-fa-black/40 line-through">
+              {formatPrice(product.compareAtPrice!)}
+            </p>
+          )}
 
           <div className="mt-6">
             <VariantSelector
@@ -110,7 +123,7 @@ export default async function ProdutoPage({
           </section>
         )}
 
-        <section>
+        <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
           <h2 className="font-display text-2xl text-fa-black">Pirâmide olfativa</h2>
           <div className="mt-4">
             <FragrancePyramid notes={product.fragranceNotes} />
@@ -120,32 +133,46 @@ export default async function ProdutoPage({
         {personalityTags.length > 0 && (
           <section>
             <h2 className="font-display text-2xl text-fa-black">Perfil</h2>
-            <p className="mt-3 text-fa-black/70">{personalityTags.map((pt) => pt.tag.name).join(", ")}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {personalityTags.map((pt) => (
+                <Badge key={pt.tag.id} variant="outline">
+                  {pt.tag.name}
+                </Badge>
+              ))}
+            </div>
           </section>
         )}
 
-        {(occasionTags.length > 0 || seasonTags.length > 0) && (
+        {whenToUseTags.length > 0 && (
           <section>
             <h2 className="font-display text-2xl text-fa-black">Quando usar</h2>
-            <p className="mt-3 text-fa-black/70">
-              {[...occasionTags.map((t) => t.tag.name), ...seasonTags.map((t) => t.tag.name)].join(", ")}
-            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {whenToUseTags.map((t) => (
+                <Badge key={t.tag.id} variant="outline">
+                  {t.tag.name}
+                </Badge>
+              ))}
+            </div>
           </section>
         )}
 
-        <section>
+        <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
           <h2 className="font-display text-2xl text-fa-black">Informações técnicas</h2>
-          <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-4">
             {product.olfactoryFamily && (
               <div>
                 <dt className="text-xs uppercase tracking-wide text-fa-black/50">Família olfativa</dt>
-                <dd className="mt-1 text-sm text-fa-black">{product.olfactoryFamily.name}</dd>
+                <dd className="mt-1.5">
+                  <Badge variant="outline">{product.olfactoryFamily.name}</Badge>
+                </dd>
               </div>
             )}
             {product.intensity && (
               <div>
                 <dt className="text-xs uppercase tracking-wide text-fa-black/50">Intensidade</dt>
-                <dd className="mt-1 text-sm text-fa-black">{INTENSITY_LABELS[product.intensity]}</dd>
+                <dd className="mt-1.5">
+                  <Badge variant="outline">{INTENSITY_LABELS[product.intensity]}</Badge>
+                </dd>
               </div>
             )}
             {product.concentration && (
