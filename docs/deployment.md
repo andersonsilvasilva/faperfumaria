@@ -7,7 +7,11 @@
 
 - Banco MySQL/MariaDB acessível remotamente (host, usuário e senha em `.env`, nunca versionados
   — ver `Dados da Empresa.txt`, que está no `.gitignore` por conter credenciais reais).
-- Domínio temporário em produção já provisionado.
+- **Domínio de produção real: https://faperfumaria.com.br/** — já registrado e apontado para a
+  mesma conta Hostinger do banco. Hoje exibe a página padrão do Hostinger ("Página padrão"),
+  ou seja, nada da aplicação foi publicado ali ainda. Existe também um domínio temporário
+  (`orchid-pelican-303574.hostingersite.com`) provisionado pela Hostinger, mas o domínio final
+  a usar em produção é o `.com.br`.
 - Acesso SSH disponível.
 
 **Ponto em aberto**: hospedagem compartilhada Hostinger é tradicionalmente orientada a
