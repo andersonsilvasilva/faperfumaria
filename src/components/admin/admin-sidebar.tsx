@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const links = [
   { label: "Dashboard", href: "/admin" },
@@ -17,7 +18,16 @@ const links = [
 export function AdminSidebar() {
   return (
     <nav aria-label="Navegação do painel administrativo" className="space-y-1">
-      <p className="mb-4 font-display text-lg text-fa-gold-light">FA Admin</p>
+      <Link href="/admin" className="mb-4 flex justify-center">
+        <Image
+          src="/brand/logo-fa-perfumaria-dourada.png"
+          alt="FA Perfumaria"
+          width={200}
+          height={200}
+          priority
+          className="object-contain"
+        />
+      </Link>
       {links.map((link) => (
         <Link
           key={link.href}
