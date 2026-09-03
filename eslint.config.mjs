@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Servidor customizado para hospedagens que exigem um entry point CommonJS
+    // (ver docs/deployment.md) — fora da árvore TS/ESM do app.
+    "server.js",
   ]),
 ]);
 
