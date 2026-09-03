@@ -32,29 +32,34 @@ export default async function CheckoutPage() {
     | undefined;
 
   if (session?.user?.id) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        name: true,
-        email: true,
-        phone: true,
-        addresses: { orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }], take: 1 },
-      },
-    });
-    if (user) {
-      initialContact = { name: user.name, email: user.email, phone: user.phone ?? undefined };
-      const address = user.addresses[0];
-      if (address) {
-        initialAddress = {
-          zipCode: address.zipCode,
-          street: address.street,
-          number: address.number,
-          complement: address.complement,
-          neighborhood: address.neighborhood,
-          city: address.city,
-          state: address.state,
-        };
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+          addresses: { orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }], take: 1 },
+        },
+      });
+      if (user) {
+        initialContact = { name: user.name, email: user.email, phone: user.phone ?? undefined };
+        const address = user.addresses[0];
+        if (address) {
+          initialAddress = {
+            zipCode: address.zipCode,
+            street: address.street,
+            number: address.number,
+            complement: address.complement,
+            neighborhood: address.neighborhood,
+            city: address.city,
+            state: address.state,
+          };
+        }
       }
+    } catch (error) {
+      // Pré-preenchimento é conveniência, não deve impedir o cliente de finalizar a compra.
+      console.error("Falha ao pré-carregar dados do cliente no checkout:", error);
     }
   }
 
