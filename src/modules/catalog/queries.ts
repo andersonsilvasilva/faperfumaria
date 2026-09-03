@@ -27,7 +27,7 @@ export interface ProductListParams {
 const productCardInclude = {
   brand: true,
   images: { where: { isMain: true }, take: 1 },
-  variants: { orderBy: { volumeMl: "asc" as const } },
+  variants: { where: { isActive: true }, orderBy: { volumeMl: "asc" as const } },
   categories: { include: { category: true } },
 } satisfies Prisma.ProductInclude;
 
