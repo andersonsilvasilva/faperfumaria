@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { forwardRef, useActionState, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { maskCep, maskPhone } from "@/lib/masks";
 import type { AddressActionState } from "@/modules/addresses/actions";
+import { lookupCepClient } from "@/lib/viacep-client";
 
 const initialState: AddressActionState = { status: "idle" };
 
@@ -31,6 +32,30 @@ export function AddressForm({
   submitLabel: string;
 }) {
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const [cepStatus, setCepStatus] = useState<"idle" | "loading" | "error">("idle");
+  const streetRef = useRef<HTMLInputElement>(null);
+  const neighborhoodRef = useRef<HTMLInputElement>(null);
+  const cityRef = useRef<HTMLInputElement>(null);
+  const stateRef = useRef<HTMLInputElement>(null);
+  const numberRef = useRef<HTMLInputElement>(null);
+
+  async function handleCepBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const digits = e.currentTarget.value.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+
+    setCepStatus("loading");
+    const data = await lookupCepClient(digits);
+    if (!data) {
+      setCepStatus("error");
+      return;
+    }
+    if (streetRef.current) streetRef.current.value = data.logradouro;
+    if (neighborhoodRef.current) neighborhoodRef.current.value = data.bairro;
+    if (cityRef.current) cityRef.current.value = data.localidade;
+    if (stateRef.current) stateRef.current.value = data.uf;
+    setCepStatus("idle");
+    numberRef.current?.focus();
+  }
 
   return (
     <form action={formAction} className="space-y-4">
@@ -46,21 +71,41 @@ export function AddressForm({
             e.currentTarget.value = maskPhone(e.currentTarget.value);
           }}
         />
+        <div>
+          <TextField
+            label="CEP"
+            name="zipCode"
+            defaultValue={initialValues?.zipCode}
+            required
+            onInput={(e) => {
+              e.currentTarget.value = maskCep(e.currentTarget.value);
+            }}
+            onBlur={handleCepBlur}
+          />
+          {cepStatus === "loading" && <p className="mt-1 text-xs text-fa-black/50">Buscando endereço...</p>}
+          {cepStatus === "error" && (
+            <p className="mt-1 text-xs text-red-600">CEP não encontrado — preencha manualmente.</p>
+          )}
+        </div>
         <TextField
-          label="CEP"
-          name="zipCode"
-          defaultValue={initialValues?.zipCode}
+          ref={streetRef}
+          label="Endereço"
+          name="street"
+          defaultValue={initialValues?.street}
           required
-          onInput={(e) => {
-            e.currentTarget.value = maskCep(e.currentTarget.value);
-          }}
+          className="sm:col-span-2"
         />
-        <TextField label="Endereço" name="street" defaultValue={initialValues?.street} required className="sm:col-span-2" />
-        <TextField label="Número" name="number" defaultValue={initialValues?.number} required />
+        <TextField ref={numberRef} label="Número" name="number" defaultValue={initialValues?.number} required />
         <TextField label="Complemento" name="complement" defaultValue={initialValues?.complement ?? ""} />
-        <TextField label="Bairro" name="neighborhood" defaultValue={initialValues?.neighborhood} required />
-        <TextField label="Cidade" name="city" defaultValue={initialValues?.city} required />
-        <TextField label="UF" name="state" defaultValue={initialValues?.state} required maxLength={2} />
+        <TextField
+          ref={neighborhoodRef}
+          label="Bairro"
+          name="neighborhood"
+          defaultValue={initialValues?.neighborhood}
+          required
+        />
+        <TextField ref={cityRef} label="Cidade" name="city" defaultValue={initialValues?.city} required />
+        <TextField ref={stateRef} label="UF" name="state" defaultValue={initialValues?.state} required maxLength={2} />
       </div>
 
       <label className="flex items-center gap-2 text-sm text-fa-black">
@@ -77,18 +122,15 @@ export function AddressForm({
   );
 }
 
-function TextField({
-  label,
-  name,
-  required = false,
-  className = "",
-  ...rest
-}: {
-  label: string;
-  name: string;
-  required?: boolean;
-  className?: string;
-} & React.InputHTMLAttributes<HTMLInputElement>) {
+const TextField = forwardRef<
+  HTMLInputElement,
+  {
+    label: string;
+    name: string;
+    required?: boolean;
+    className?: string;
+  } & React.InputHTMLAttributes<HTMLInputElement>
+>(function TextField({ label, name, required = false, className = "", ...rest }, ref) {
   return (
     <div className={className}>
       <label htmlFor={name} className="text-xs font-medium text-fa-black/70">
@@ -96,6 +138,7 @@ function TextField({
         {required && " *"}
       </label>
       <input
+        ref={ref}
         id={name}
         name={name}
         required={required}
@@ -104,4 +147,4 @@ function TextField({
       />
     </div>
   );
-}
+});

@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { forwardRef, useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { formatPrice } from "@/lib/format";
 import { maskCep, maskCpf, maskPhone } from "@/lib/masks";
 import { Button } from "@/components/ui/button";
 import { createOrderAction, type CheckoutActionState } from "@/modules/orders/actions";
 import { calculateShippingAction, type ShippingCalcState } from "@/modules/shipping/actions";
 import { trackEvent, toAnalyticsItem } from "@/lib/analytics";
+import { lookupCepClient } from "@/lib/viacep-client";
 
 const initialCheckoutState: CheckoutActionState = { status: "idle" };
 const initialShippingState: ShippingCalcState = { status: "idle" };
@@ -19,16 +20,36 @@ interface CheckoutAnalyticsItem {
   quantity: number;
 }
 
+interface CheckoutInitialContact {
+  name?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface CheckoutInitialAddress {
+  zipCode: string;
+  street: string;
+  number: string;
+  complement: string | null;
+  neighborhood: string;
+  city: string;
+  state: string;
+}
+
 export function CheckoutForm({
   subtotal,
   discount,
   allowCardPayment,
   analyticsItems,
+  initialContact,
+  initialAddress,
 }: {
   subtotal: number;
   discount: number;
   allowCardPayment: boolean;
   analyticsItems: CheckoutAnalyticsItem[];
+  initialContact?: CheckoutInitialContact;
+  initialAddress?: CheckoutInitialAddress;
 }) {
   const [checkoutState, checkoutAction, isSubmitting] = useActionState(createOrderAction, initialCheckoutState);
   const [shippingState, calculateShipping, isCalculatingShipping] = useActionState(
@@ -38,6 +59,12 @@ export function CheckoutForm({
   const [, startTransition] = useTransition();
   const [selectedMethod, setSelectedMethod] = useState<string>("LOCAL_PICKUP");
   const [paymentMethod, setPaymentMethod] = useState<string>("PIX");
+  const [cepStatus, setCepStatus] = useState<"idle" | "loading" | "error">("idle");
+  const streetRef = useRef<HTMLInputElement>(null);
+  const neighborhoodRef = useRef<HTMLInputElement>(null);
+  const cityRef = useRef<HTMLInputElement>(null);
+  const stateRef = useRef<HTMLInputElement>(null);
+  const numberRef = useRef<HTMLInputElement>(null);
 
   const selectedOption = shippingState.options?.find((o) => o.method === selectedMethod);
   const shippingCost = selectedMethod === "LOCAL_PICKUP" ? 0 : (selectedOption?.cost ?? 0);
@@ -49,6 +76,14 @@ export function CheckoutForm({
       value: Math.max(0, subtotal - discount),
       items: analyticsItems.map((item) => toAnalyticsItem(item)),
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!initialAddress?.zipCode) return;
+    const fd = new FormData();
+    fd.set("cep", initialAddress.zipCode);
+    startTransition(() => calculateShipping(fd));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -67,7 +102,13 @@ export function CheckoutForm({
         <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
           <h2 className="font-display text-xl text-fa-black">Contato</h2>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Nome completo" name="contactName" required autoComplete="name" />
+            <Field
+              label="Nome completo"
+              name="contactName"
+              required
+              autoComplete="name"
+              defaultValue={initialContact?.name}
+            />
             <Field
               label="CPF"
               name="contactCpf"
@@ -80,7 +121,14 @@ export function CheckoutForm({
                 e.currentTarget.value = maskCpf(e.currentTarget.value);
               }}
             />
-            <Field label="E-mail" name="contactEmail" type="email" required autoComplete="email" />
+            <Field
+              label="E-mail"
+              name="contactEmail"
+              type="email"
+              required
+              autoComplete="email"
+              defaultValue={initialContact?.email}
+            />
             <Field
               label="WhatsApp"
               name="contactPhone"
@@ -89,6 +137,7 @@ export function CheckoutForm({
               placeholder="(47) 90000-0000"
               maxLength={15}
               inputMode="numeric"
+              defaultValue={initialContact?.phone ? maskPhone(initialContact.phone) : undefined}
               onInput={(e) => {
                 e.currentTarget.value = maskPhone(e.currentTarget.value);
               }}
@@ -105,16 +154,31 @@ export function CheckoutForm({
               placeholder="Seu CEP"
               maxLength={9}
               inputMode="numeric"
+              defaultValue={initialAddress?.zipCode ? maskCep(initialAddress.zipCode) : undefined}
               className="h-10 flex-1 rounded-sm border border-fa-stone/40 px-3 text-sm focus:border-fa-gold focus:outline-none"
               onInput={(e) => {
                 e.currentTarget.value = maskCep(e.currentTarget.value);
               }}
-              onBlur={(e) => {
-                if (e.target.value.replace(/\D/g, "").length === 8) {
-                  const fd = new FormData();
-                  fd.set("cep", e.target.value);
-                  startTransition(() => calculateShipping(fd));
+              onBlur={async (e) => {
+                const digits = e.target.value.replace(/\D/g, "");
+                if (digits.length !== 8) return;
+
+                const fd = new FormData();
+                fd.set("cep", e.target.value);
+                startTransition(() => calculateShipping(fd));
+
+                setCepStatus("loading");
+                const data = await lookupCepClient(digits);
+                if (!data) {
+                  setCepStatus("error");
+                  return;
                 }
+                if (streetRef.current) streetRef.current.value = data.logradouro;
+                if (neighborhoodRef.current) neighborhoodRef.current.value = data.bairro;
+                if (cityRef.current) cityRef.current.value = data.localidade;
+                if (stateRef.current) stateRef.current.value = data.uf;
+                setCepStatus("idle");
+                numberRef.current?.focus();
               }}
             />
             <button
@@ -132,6 +196,10 @@ export function CheckoutForm({
               {isCalculatingShipping ? "Calculando..." : "Calcular"}
             </button>
           </div>
+          {cepStatus === "loading" && <p className="mt-2 text-xs text-fa-black/50">Buscando endereço...</p>}
+          {cepStatus === "error" && (
+            <p className="mt-2 text-xs text-red-600">CEP não encontrado — preencha o endereço manualmente.</p>
+          )}
           {shippingState.status === "error" && (
             <p className="mt-2 text-xs text-red-600">{shippingState.message}</p>
           )}
@@ -164,12 +232,32 @@ export function CheckoutForm({
 
           {selectedMethod !== "LOCAL_PICKUP" && (
             <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Endereço" name="street" required className="sm:col-span-2" />
-              <Field label="Número" name="number" required />
-              <Field label="Complemento" name="complement" />
-              <Field label="Bairro" name="neighborhood" required />
-              <Field label="Cidade" name="city" required />
-              <Field label="UF" name="state" required maxLength={2} />
+              <Field
+                ref={streetRef}
+                label="Endereço"
+                name="street"
+                required
+                className="sm:col-span-2"
+                defaultValue={initialAddress?.street}
+              />
+              <Field ref={numberRef} label="Número" name="number" required defaultValue={initialAddress?.number} />
+              <Field label="Complemento" name="complement" defaultValue={initialAddress?.complement ?? undefined} />
+              <Field
+                ref={neighborhoodRef}
+                label="Bairro"
+                name="neighborhood"
+                required
+                defaultValue={initialAddress?.neighborhood}
+              />
+              <Field ref={cityRef} label="Cidade" name="city" required defaultValue={initialAddress?.city} />
+              <Field
+                ref={stateRef}
+                label="UF"
+                name="state"
+                required
+                maxLength={2}
+                defaultValue={initialAddress?.state}
+              />
             </div>
           )}
         </section>
@@ -234,20 +322,16 @@ export function CheckoutForm({
   );
 }
 
-function Field({
-  label,
-  name,
-  type = "text",
-  required = false,
-  className = "",
-  ...rest
-}: {
-  label: string;
-  name: string;
-  type?: string;
-  required?: boolean;
-  className?: string;
-} & React.InputHTMLAttributes<HTMLInputElement>) {
+const Field = forwardRef<
+  HTMLInputElement,
+  {
+    label: string;
+    name: string;
+    type?: string;
+    required?: boolean;
+    className?: string;
+  } & React.InputHTMLAttributes<HTMLInputElement>
+>(function Field({ label, name, type = "text", required = false, className = "", ...rest }, ref) {
   return (
     <div className={className}>
       <label htmlFor={name} className="text-xs font-medium text-fa-black/70">
@@ -255,6 +339,7 @@ function Field({
         {required && " *"}
       </label>
       <input
+        ref={ref}
         id={name}
         name={name}
         type={type}
@@ -264,7 +349,7 @@ function Field({
       />
     </div>
   );
-}
+});
 
 function ShippingOption({
   method,
