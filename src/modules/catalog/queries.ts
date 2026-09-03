@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { Intensity, Prisma } from "@/generated/prisma/client";
 
@@ -144,27 +145,32 @@ export async function getBestSellers(limit = 4) {
   });
 }
 
-export async function getBrandsWithActiveProducts() {
-  return prisma.brand.findMany({
-    where: { products: { some: { isActive: true } } },
-    orderBy: { name: "asc" },
-  });
-}
+// Dados de referência dos filtros mudam raramente (gerenciados pelo Admin) mas são consultados
+// em toda visita ao catálogo — cachear evita bater no banco a cada requisição, o que importa
+// bastante numa conta com limite apertado de conexões novas por hora.
+export const getBrandsWithActiveProducts = unstable_cache(
+  () => prisma.brand.findMany({ where: { products: { some: { isActive: true } } }, orderBy: { name: "asc" } }),
+  ["catalog-brands"],
+  { revalidate: 300 },
+);
 
-export async function getCatalogCategories() {
-  return prisma.category.findMany({ orderBy: { name: "asc" } });
-}
+export const getCatalogCategories = unstable_cache(
+  () => prisma.category.findMany({ orderBy: { name: "asc" } }),
+  ["catalog-categories"],
+  { revalidate: 300 },
+);
 
-export async function getOlfactoryFamilies() {
-  return prisma.olfactoryFamily.findMany({ orderBy: { name: "asc" } });
-}
+export const getOlfactoryFamilies = unstable_cache(
+  () => prisma.olfactoryFamily.findMany({ orderBy: { name: "asc" } }),
+  ["catalog-olfactory-families"],
+  { revalidate: 300 },
+);
 
-export async function getOccasionTags() {
-  return prisma.fragranceProfileTag.findMany({
-    where: { type: "OCCASION" },
-    orderBy: { name: "asc" },
-  });
-}
+export const getOccasionTags = unstable_cache(
+  () => prisma.fragranceProfileTag.findMany({ where: { type: "OCCASION" }, orderBy: { name: "asc" } }),
+  ["catalog-occasion-tags"],
+  { revalidate: 300 },
+);
 
 const productDetailInclude = {
   brand: true,
