@@ -82,6 +82,18 @@ const productSchema = z.object({
   canonicalUrl: z.string().trim().optional().default(""),
 });
 
+/**
+ * `compareAtPrice` só faz sentido como referência riscada MAIOR que `price` (o valor
+ * efetivamente cobrado do cliente) — ver seção "Preço" do formulário. Bloquear aqui evita
+ * salvar uma "oferta" invertida (preço riscado menor que o preço de venda).
+ */
+function validateComparePrice(data: { price: number; compareAtPrice?: number }): string | null {
+  if (data.compareAtPrice != null && data.compareAtPrice <= data.price) {
+    return `Preço "De" (R$ ${data.compareAtPrice.toFixed(2)}) precisa ser maior que o preço "Por" (R$ ${data.price.toFixed(2)}), senão não é uma oferta.`;
+  }
+  return null;
+}
+
 function parseProductFormData(formData: FormData) {
   const raw = {
     ...Object.fromEntries(formData.entries()),
@@ -121,6 +133,11 @@ export async function createProductAction(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
   const data = parsed.data;
+
+  const comparePriceError = validateComparePrice(data);
+  if (comparePriceError) {
+    return { status: "error", message: comparePriceError };
+  }
 
   const variantsResult = z.array(variantSchema).min(1, "Adicione ao menos uma variante.").safeParse(
     JSON.parse(data.variantsJson),
@@ -217,6 +234,11 @@ export async function updateProductAction(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
   const data = parsed.data;
+
+  const comparePriceError = validateComparePrice(data);
+  if (comparePriceError) {
+    return { status: "error", message: comparePriceError };
+  }
 
   const variantsResult = z.array(variantSchema).min(1, "Adicione ao menos uma variante.").safeParse(
     JSON.parse(data.variantsJson),

@@ -135,7 +135,7 @@ export default async function ProdutoPage({
             )}
           </div>
           <h1 className="mt-3 font-display text-3xl text-fa-black">{product.name}</h1>
-          {discountPercent !== null && (
+          {discountPercent !== null && discountPercent > 0 && (
             <p className="mt-1 text-sm text-fa-black/40 line-through">
               {formatPrice(product.compareAtPrice!)}
             </p>

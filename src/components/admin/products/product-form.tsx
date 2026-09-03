@@ -201,7 +201,7 @@ export function ProductForm({
           </div>
           <div>
             <label className={labelClass} htmlFor="price">
-              Preço de venda
+              Preço &quot;Por&quot; (o que o cliente paga)
             </label>
             <input
               id="price"
@@ -216,7 +216,7 @@ export function ProductForm({
           </div>
           <div>
             <label className={labelClass} htmlFor="compareAtPrice">
-              Preço promocional
+              Preço &quot;De&quot; (opcional, riscado)
             </label>
             <input
               id="compareAtPrice"
@@ -227,6 +227,10 @@ export function ProductForm({
               defaultValue={product?.compareAtPrice?.toString() ?? ""}
               className={inputClass}
             />
+            <p className="mt-1 text-xs text-fa-black/40">
+              Precisa ser maior que o preço &quot;Por&quot; — é o valor riscado que mostra o
+              desconto.
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

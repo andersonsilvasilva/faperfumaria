@@ -9,7 +9,9 @@ import type { ProductCardData } from "@/modules/catalog/queries";
 export function ProductCard({ product, priority = false }: { product: ProductCardData; priority?: boolean }) {
   const mainImage = product.images[0];
   const firstVariant = product.variants[0];
-  const hasOffer = product.compareAtPrice != null;
+  const hasOffer =
+    product.compareAtPrice != null &&
+    Number(product.compareAtPrice.toString()) > Number(product.price.toString());
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-sm border border-fa-stone/15 bg-fa-white shadow-[0_15px_35px_-20px_rgba(11,11,11,0.35)] transition-shadow duration-300 hover:shadow-[0_25px_45px_-20px_rgba(11,11,11,0.45)]">
