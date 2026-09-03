@@ -63,7 +63,13 @@ export function CartItemRow({ item }: { item: CartItemRowData }) {
     <div className="flex gap-4 border-b border-fa-stone/15 py-5 last:border-0">
       {image && (
         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-sm bg-fa-off-white">
-          <Image src={image.url} alt={image.altText ?? item.variant.product.name} fill className="object-cover" />
+          <Image
+            src={image.url}
+            alt={image.altText ?? item.variant.product.name}
+            fill
+            unoptimized={image.url.startsWith("/uploads/")}
+            className="object-cover"
+          />
         </div>
       )}
 

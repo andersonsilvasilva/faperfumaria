@@ -18,6 +18,7 @@ export function ProductGallery({ images, productName }: { images: ProductDetailD
           alt={active.altText ?? productName}
           fill
           priority
+          unoptimized={active.url.startsWith("/uploads/")}
           className="object-cover"
           sizes="(min-width: 768px) 50vw, 100vw"
         />
@@ -34,7 +35,13 @@ export function ProductGallery({ images, productName }: { images: ProductDetailD
                 index === activeIndex ? "border-fa-gold ring-1 ring-fa-gold" : "border-fa-stone/30"
               }`}
             >
-              <Image src={image.url} alt={image.altText ?? productName} fill className="object-cover" />
+              <Image
+                src={image.url}
+                alt={image.altText ?? productName}
+                fill
+                unoptimized={image.url.startsWith("/uploads/")}
+                className="object-cover"
+              />
             </button>
           ))}
         </div>
