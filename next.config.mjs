@@ -1,6 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   experimental: {
     // Hospedagem compartilhada (ex.: Hostinger) reporta a contagem de CPUs do host físico, não
     // a fração real alocada para a conta — sem isso o build tenta abrir dezenas de workers e
