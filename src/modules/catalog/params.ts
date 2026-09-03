@@ -44,6 +44,7 @@ export function parseCatalogParams(
 
   return {
     sort,
+    categorySlugs: toArray(searchParams.categoria),
     brandSlugs: toArray(searchParams.marca),
     olfactoryFamilySlugs: toArray(searchParams.familia),
     tagSlugs: toArray(searchParams.ocasiao),

@@ -1,4 +1,9 @@
-import { getBrandsWithActiveProducts, getOccasionTags, getOlfactoryFamilies } from "@/modules/catalog/queries";
+import {
+  getBrandsWithActiveProducts,
+  getCatalogCategories,
+  getOccasionTags,
+  getOlfactoryFamilies,
+} from "@/modules/catalog/queries";
 import { PRICE_RANGES, type RawSearchParams } from "@/modules/catalog/params";
 
 const INTENSITY_OPTIONS = [
@@ -23,12 +28,14 @@ function toArray(value: string | string[] | undefined): string[] {
 }
 
 export async function CatalogFilters({ searchParams }: { searchParams: RawSearchParams }) {
-  const [brands, families, occasionTags] = await Promise.all([
+  const [categories, brands, families, occasionTags] = await Promise.all([
+    getCatalogCategories(),
     getBrandsWithActiveProducts(),
     getOlfactoryFamilies(),
     getOccasionTags(),
   ]);
 
+  const selectedCategories = toArray(searchParams.categoria);
   const selectedBrands = toArray(searchParams.marca);
   const selectedFamilies = toArray(searchParams.familia);
   const selectedOccasions = toArray(searchParams.ocasiao);
@@ -80,6 +87,25 @@ export async function CatalogFilters({ searchParams }: { searchParams: RawSearch
           )}
         </div>
       </fieldset>
+
+      {categories.length > 0 && (
+        <fieldset>
+          <legend className="text-xs font-semibold uppercase tracking-wide text-fa-black/60">Categoria</legend>
+          <div className="mt-3 space-y-2">
+            {categories.map((category) => (
+              <label key={category.id} className="flex items-center gap-2 text-sm text-fa-black/80">
+                <input
+                  type="checkbox"
+                  name="categoria"
+                  value={category.slug}
+                  defaultChecked={selectedCategories.includes(category.slug)}
+                />
+                {category.name}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       {brands.length > 0 && (
         <fieldset>

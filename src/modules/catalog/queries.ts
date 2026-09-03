@@ -11,6 +11,7 @@ export type ProductSort =
 
 export interface ProductListParams {
   categorySlug?: string;
+  categorySlugs?: string[];
   brandSlugs?: string[];
   olfactoryFamilySlugs?: string[];
   tagSlugs?: string[];
@@ -56,8 +57,9 @@ function buildOrderBy(sort?: ProductSort): Prisma.ProductOrderByWithRelationInpu
 function buildWhere(params: ProductListParams): Prisma.ProductWhereInput {
   const where: Prisma.ProductWhereInput = { isActive: true };
 
-  if (params.categorySlug) {
-    where.categories = { some: { category: { slug: params.categorySlug } } };
+  const categorySlugs = [...(params.categorySlug ? [params.categorySlug] : []), ...(params.categorySlugs ?? [])];
+  if (categorySlugs.length) {
+    where.categories = { some: { category: { slug: { in: categorySlugs } } } };
   }
   if (params.brandSlugs?.length) {
     where.brand = { slug: { in: params.brandSlugs } };
@@ -147,6 +149,10 @@ export async function getBrandsWithActiveProducts() {
     where: { products: { some: { isActive: true } } },
     orderBy: { name: "asc" },
   });
+}
+
+export async function getCatalogCategories() {
+  return prisma.category.findMany({ orderBy: { name: "asc" } });
 }
 
 export async function getOlfactoryFamilies() {
