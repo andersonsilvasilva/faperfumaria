@@ -9,7 +9,7 @@ import { slugify } from "@/lib/slug";
 import { INTENSITY_ORDER } from "@/lib/labels";
 
 export interface ProductActionState {
-  status: "idle" | "error";
+  status: "idle" | "error" | "success";
   message?: string;
 }
 
@@ -367,4 +367,40 @@ export async function toggleProductActiveAction(formData: FormData): Promise<voi
 
   await prisma.product.update({ where: { id: productId }, data: { isActive: !product.isActive } });
   revalidatePath("/admin/produtos");
+}
+
+/**
+ * Exclui um produto de verdade (não só desativa) — só quando nenhuma variante já foi vendida
+ * (OrderItem.variant não tem cascade, exatamente para proteger histórico de pedidos). Se houver
+ * pedidos associados, recusa com uma mensagem clara em vez de deixar o erro de FK estourar.
+ * Todo o resto (variantes, imagens, categorias, notas, tags, favoritos, avaliações) casca
+ * automaticamente pelo schema.
+ */
+export async function deleteProductAction(
+  _prevState: ProductActionState,
+  formData: FormData,
+): Promise<ProductActionState> {
+  const admin = await requireAdmin();
+  if (!admin.ok) return { status: "error", message: admin.message };
+
+  const productId = formData.get("productId")?.toString();
+  if (!productId) return { status: "error", message: "Produto inválido." };
+
+  const orderCount = await prisma.orderItem.count({ where: { variant: { productId } } });
+  if (orderCount > 0) {
+    return {
+      status: "error",
+      message: `Não é possível excluir: este produto já tem ${orderCount} item(ns) de pedido associado(s). Desative em vez de excluir.`,
+    };
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.product.delete({ where: { id: productId } });
+    await tx.adminAuditLog.create({
+      data: { adminId: admin.userId, action: "PRODUCT_DELETE", entityType: "Product", entityId: productId },
+    });
+  });
+
+  revalidatePath("/admin/produtos");
+  return { status: "success", message: "Produto excluído." };
 }

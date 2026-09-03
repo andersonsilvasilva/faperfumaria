@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { listProductsForAdmin } from "@/modules/admin/products-queries";
 import { toggleProductActiveAction } from "@/modules/admin/products-actions";
+import { ProductDeleteButton } from "@/components/admin/products/product-delete-button";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
@@ -91,6 +92,9 @@ export default async function AdminProductsPage({
                         {product.isActive ? "Desativar" : "Ativar"}
                       </button>
                     </form>
+                    <span className="ml-4 inline">
+                      <ProductDeleteButton productId={product.id} productName={product.name} />
+                    </span>
                   </td>
                 </tr>
               );
