@@ -19,6 +19,12 @@ const optionalNumber = z
   .transform((v) => (v ? Number(v) : undefined))
   .refine((v) => v === undefined || Number.isFinite(v), "Valor numérico inválido.");
 
+const optionalPositiveInt = z
+  .string()
+  .optional()
+  .transform((v) => (v ? Number(v) : undefined))
+  .refine((v) => v === undefined || (Number.isInteger(v) && v > 0), "Peso inválido.");
+
 const optionalDate = z
   .string()
   .optional()
@@ -31,7 +37,7 @@ const variantSchema = z.object({
   price: z.coerce.number().positive("Preço da variante inválido."),
   minStockQty: z.coerce.number().int().min(0).default(3),
   barcode: z.string().trim().optional().default(""),
-  weightGrams: z.coerce.number().int().positive().optional(),
+  weightGrams: optionalPositiveInt,
   isActive: z.boolean().default(true),
 });
 
