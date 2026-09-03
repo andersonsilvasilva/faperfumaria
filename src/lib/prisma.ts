@@ -22,13 +22,15 @@ function createPrismaClient() {
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     database: url.pathname.replace(/^\//, ""),
-    connectionLimit: 2,
+    connectionLimit: 5,
   });
   return new PrismaClient({ adapter });
 }
 
+// Cachear em globalThis também em produção: o Next.js compila rotas/actions em chunks
+// separados, e sem esse cache global cada chunk que importa este módulo pela primeira vez
+// criava seu PRÓPRIO PrismaClient (e pool), multiplicando conexões novas sem nenhum reload
+// acontecer — o gargalo real por trás do limite de conexões/hora da conta, não recriação do
+// processo. Guardar só em dev era a causa; cachear sempre corrige.
 export const prisma = globalThis.prismaClient ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalThis.prismaClient = prisma;
-}
+globalThis.prismaClient = prisma;
