@@ -30,9 +30,18 @@ export const metadata: Metadata = {
     title: "FA Perfumaria | Sua presença começa pela essência",
     description:
       "Fragrâncias escolhidas para quem entende que um perfume vai além do aroma.",
+    images: [
+      {
+        url: "/brand/logo-fa-perfumaria.jpg",
+        width: 1280,
+        height: 853,
+        alt: "FA Perfumaria",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
+    images: ["/brand/logo-fa-perfumaria.jpg"],
   },
 };
 
