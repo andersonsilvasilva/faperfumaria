@@ -26,11 +26,24 @@ export default async function CheckoutPage() {
 
   const allowCardPayment = process.env.PAYMENT_PROVIDER !== "mercadopago";
 
+  const analyticsItems = cart.items.map((item) => ({
+    id: item.variant.id,
+    name: item.variant.product.name,
+    brand: item.variant.product.brand.name,
+    price: Number(item.variant.price.toString()),
+    quantity: item.quantity,
+  }));
+
   return (
     <Container className="py-10">
       <h1 className="font-display text-3xl text-fa-black">Finalizar compra</h1>
       <div className="mt-8">
-        <CheckoutForm subtotal={subtotal} discount={discount} allowCardPayment={allowCardPayment} />
+        <CheckoutForm
+          subtotal={subtotal}
+          discount={discount}
+          allowCardPayment={allowCardPayment}
+          analyticsItems={analyticsItems}
+        />
       </div>
     </Container>
   );

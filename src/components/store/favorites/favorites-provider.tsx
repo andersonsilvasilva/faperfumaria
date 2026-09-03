@@ -6,7 +6,7 @@ import { toggleFavoriteAction } from "@/modules/favorites/actions";
 interface FavoritesContextValue {
   favoriteIds: Set<string>;
   isLoading: boolean;
-  toggle: (productId: string) => Promise<{ status: "success" | "error"; message?: string }>;
+  toggle: (productId: string) => Promise<{ status: "success" | "error"; message?: string; favorited?: boolean }>;
 }
 
 const FavoritesContext = createContext<FavoritesContextValue | null>(null);

@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { addToCartAction, type CartActionState } from "@/modules/cart/actions";
+import { trackEvent, toAnalyticsItem } from "@/lib/analytics";
 
 const initialState: CartActionState = { status: "idle" };
 
@@ -10,19 +11,29 @@ export function AddToCartButton({
   quantity = 1,
   className = "",
   disabled = false,
+  productName,
+  brandName,
+  price,
 }: {
   variantId: string;
   quantity?: number;
   className?: string;
   disabled?: boolean;
+  productName?: string;
+  brandName?: string;
+  price?: number;
 }) {
   const [state, formAction, isPending] = useActionState(addToCartAction, initialState);
 
   useEffect(() => {
     if (state.status === "success") {
       window.dispatchEvent(new Event("cart:updated"));
+      if (productName) {
+        const item = toAnalyticsItem({ id: variantId, name: productName, brand: brandName, price, quantity });
+        trackEvent("add_to_cart", { currency: "BRL", value: (price ?? 0) * quantity, items: [item] });
+      }
     }
-  }, [state]);
+  }, [state, variantId, quantity, productName, brandName, price]);
 
   return (
     <div>

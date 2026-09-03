@@ -8,6 +8,7 @@ import { FragrancePyramid } from "@/components/store/product/fragrance-pyramid";
 import { ProductCard } from "@/components/store/product-card";
 import { ReviewList } from "@/components/store/product/review-list";
 import { ReviewForm } from "@/components/store/product/review-form";
+import { ViewItemTracker } from "@/components/analytics/view-item-tracker";
 import { getProductBySlug, getRelatedProducts } from "@/modules/catalog/queries";
 import { getProductReviews, getReviewSummary, getReviewEligibility } from "@/modules/reviews/queries";
 import { INTENSITY_LABELS } from "@/lib/labels";
@@ -25,8 +26,9 @@ export async function generateMetadata({
   if (!product) return {};
 
   return {
-    title: `${product.name} | FA Perfumaria`,
+    title: product.name,
     description: product.shortDescription ?? undefined,
+    alternates: product.canonicalUrl ? { canonical: product.canonicalUrl } : undefined,
     openGraph: {
       title: `${product.name} | FA Perfumaria`,
       description: product.shortDescription ?? undefined,
@@ -60,6 +62,8 @@ export default async function ProdutoPage({
     ? Math.round((1 - Number(product.price.toString()) / Number(product.compareAtPrice.toString())) * 100)
     : null;
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -75,11 +79,40 @@ export default async function ProdutoPage({
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
     },
+    ...(reviewSummary.count > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: reviewSummary.average.toFixed(1),
+            reviewCount: reviewSummary.count,
+          },
+        }
+      : {}),
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Início", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Loja", item: `${siteUrl}/loja` },
+      { "@type": "ListItem", position: 3, name: product.name, item: `${siteUrl}/produto/${product.slug}` },
+    ],
   };
 
   return (
     <Container className="py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <ViewItemTracker
+        id={product.id}
+        name={product.name}
+        brand={product.brand.name}
+        price={Number(product.price.toString())}
+      />
 
       <nav aria-label="Breadcrumb" className="text-xs text-fa-black/50">
         <Link href="/" className="hover:text-fa-gold">
@@ -111,6 +144,8 @@ export default async function ProdutoPage({
           <div className="mt-6">
             <VariantSelector
               productId={product.id}
+              productName={product.name}
+              brandName={product.brand.name}
               variants={product.variants.map((variant) => ({
                 id: variant.id,
                 volumeMl: variant.volumeMl,

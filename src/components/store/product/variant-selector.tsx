@@ -6,6 +6,7 @@ import { formatInstallments, formatPrice } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { addToCartAction, type CartActionState } from "@/modules/cart/actions";
 import { useFavorites } from "@/components/store/favorites/favorites-provider";
+import { trackEvent, toAnalyticsItem } from "@/lib/analytics";
 
 export interface PlainVariant {
   id: string;
@@ -16,7 +17,17 @@ export interface PlainVariant {
 
 const initialState: CartActionState = { status: "idle" };
 
-export function VariantSelector({ productId, variants }: { productId: string; variants: PlainVariant[] }) {
+export function VariantSelector({
+  productId,
+  productName,
+  brandName,
+  variants,
+}: {
+  productId: string;
+  productName?: string;
+  brandName?: string;
+  variants: PlainVariant[];
+}) {
   const [selectedId, setSelectedId] = useState(variants[0]?.id);
   const [quantity, setQuantity] = useState(1);
   const [state, formAction, isPending] = useActionState(addToCartAction, initialState);
@@ -30,6 +41,11 @@ export function VariantSelector({ productId, variants }: { productId: string; va
       const result = await toggle(productId);
       if (result.status === "error" && result.message === "login-required") {
         router.push(`/entrar?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+      } else if (result.status === "success" && result.favorited && productName) {
+        trackEvent("add_to_wishlist", {
+          currency: "BRL",
+          items: [toAnalyticsItem({ id: productId, name: productName, brand: brandName })],
+        });
       }
     });
   }
@@ -37,9 +53,20 @@ export function VariantSelector({ productId, variants }: { productId: string; va
   const selected = variants.find((variant) => variant.id === selectedId) ?? variants[0];
 
   useEffect(() => {
-    if (state.status === "success") {
+    if (state.status === "success" && selected) {
       window.dispatchEvent(new Event("cart:updated"));
+      if (productName) {
+        const item = toAnalyticsItem({
+          id: selected.id,
+          name: productName,
+          brand: brandName,
+          price: selected.price,
+          quantity,
+        });
+        trackEvent("add_to_cart", { currency: "BRL", value: selected.price * quantity, items: [item] });
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   if (!selected) {

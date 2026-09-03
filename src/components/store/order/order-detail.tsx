@@ -4,7 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/format";
 import { ORDER_STATUS_LABELS } from "@/lib/labels";
 import { SimulatePaymentButton } from "@/components/store/order/simulate-payment-button";
+import { PurchaseTracker } from "@/components/analytics/purchase-tracker";
 import type { Prisma } from "@/generated/prisma/client";
+
+const PAID_STATUSES = new Set(["PAID", "PREPARING", "SHIPPED", "DELIVERED"]);
 
 const STATUS_BADGE_VARIANT: Record<string, "success" | "danger" | "outline" | "gold"> = {
   PAID: "success",
@@ -37,6 +40,19 @@ export function OrderDetail({
 
   return (
     <Container className="max-w-3xl py-16">
+      {PAID_STATUSES.has(order.status) && (
+        <PurchaseTracker
+          orderNumber={order.orderNumber}
+          value={Number(order.total.toString())}
+          shipping={Number(order.shippingTotal.toString())}
+          items={order.items.map((item) => ({
+            id: item.variantId,
+            name: item.productNameSnapshot,
+            price: Number(item.unitPrice.toString()),
+            quantity: item.quantity,
+          }))}
+        />
+      )}
       {isConfirmation && (
         <p className="text-xs font-semibold uppercase tracking-wide text-fa-gold">Pedido confirmado</p>
       )}

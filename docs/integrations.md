@@ -108,8 +108,44 @@ Workspace) — suficiente para o volume transacional de uma loja deste porte.
 
 ## Analytics
 
-Google Analytics 4 (`NEXT_PUBLIC_GA_ID`) e Meta Pixel (`NEXT_PUBLIC_META_PIXEL_ID`), carregados
-apenas se as variáveis estiverem definidas. Eventos: `view_item`, `view_item_list`, `search`,
-`add_to_cart`, `remove_from_cart`, `begin_checkout`, `add_payment_info`, `purchase`,
-`add_to_wishlist`. `purchase` só dispara após confirmação real de pagamento — nunca no
-redirecionamento do checkout.
+Google Analytics 4 (`NEXT_PUBLIC_GA_ID`) e Meta Pixel (`NEXT_PUBLIC_META_PIXEL_ID`), implementados
+em `src/components/analytics/analytics-scripts.tsx` (carrega os scripts só se as variáveis
+estiverem definidas — em dev, sem valores, nada carrega) + `src/lib/analytics.ts`
+(`trackEvent()`, único ponto de disparo, nunca lança erro se os scripts não estiverem
+presentes). Scripts só ficam no layout do `(store)` — o Admin nunca carrega analytics, para não
+poluir os dados com acessos da equipe.
+
+Eventos disparados (nomes GA4; `trackEvent` também traduz para o evento padrão equivalente do
+Meta Pixel quando existe um):
+
+- `view_item` — página de produto, ao montar (`ViewItemTracker`).
+- `view_item_list` / `search` — catálogo/categoria/busca, ao montar (`CatalogTracker`, dentro de
+  `CatalogView` — dispara `search` só quando há termo de busca).
+- `add_to_cart` — sucesso do form de adicionar ao carrinho (`AddToCartButton`, `VariantSelector`).
+- `remove_from_cart` — remoção de item do carrinho (`CartItemRow`).
+- `add_to_wishlist` — favoritar um produto (`VariantSelector`; **não implementado no
+  `FavoriteButton` do card de produto** — ele não tem nome/preço do produto disponível hoje;
+  ver possível melhoria futura).
+- `begin_checkout` — ao montar a página de checkout (`CheckoutForm`).
+- `add_payment_info` — no `onSubmit` do formulário de checkout (antes da Server Action rodar).
+- `purchase` — **só quando o pedido já está com status pago** (`PAID`/`PREPARING`/`SHIPPED`/
+  `DELIVERED`), nunca em `PENDING_PAYMENT` (seção 52 do CLAUDE.md: "Não disparar purchase antes
+  de confirmação real"). Deduplicado por `orderNumber` via `localStorage`
+  (`PurchaseTracker`, renderizado pelo `OrderDetail` compartilhado entre `/pedido/[orderNumber]`
+  e `/minha-conta/pedidos/[id]`) — evita contar a mesma compra de novo a cada revisita.
+  **Limitação conhecida**: como é 100% client-side, um PIX pago fora do site (app do banco) só
+  gera o evento se o cliente reabrir/atualizar a página do pedido depois de pago — não há
+  tracking server-to-server (GA4 Measurement Protocol / Meta Conversions API) implementado.
+
+## SEO
+
+`src/app/sitemap.ts` (estático + todos os produtos ativos) e `src/app/robots.ts` (bloqueia
+`/admin`, `/api`, `/minha-conta`, `/checkout`, `/carrinho`, `/entrar`) via convenção de arquivo
+do Next.js. JSON-LD: `Organization` + `WebSite` no layout raiz (toda página); `Product` +
+`BreadcrumbList` + `AggregateRating` (só quando há avaliações aprovadas) na página de produto.
+Campo `Product.canonicalUrl` (preenchido no Admin) já é usado como `alternates.canonical` na
+página de produto quando definido.
+
+**Gap conhecido**: a rota `/marca/[slug]` da seção 8 do CLAUDE.md nunca foi construída (só existe
+o CRUD de marcas no Admin) — filtro por marca no catálogo funciona (`?marca=slug`), mas não há
+uma página dedicada por marca.

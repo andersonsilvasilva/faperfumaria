@@ -1,23 +1,34 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { formatPrice } from "@/lib/format";
 import { maskCep, maskCpf, maskPhone } from "@/lib/masks";
 import { Button } from "@/components/ui/button";
 import { createOrderAction, type CheckoutActionState } from "@/modules/orders/actions";
 import { calculateShippingAction, type ShippingCalcState } from "@/modules/shipping/actions";
+import { trackEvent, toAnalyticsItem } from "@/lib/analytics";
 
 const initialCheckoutState: CheckoutActionState = { status: "idle" };
 const initialShippingState: ShippingCalcState = { status: "idle" };
+
+interface CheckoutAnalyticsItem {
+  id: string;
+  name: string;
+  brand: string;
+  price: number;
+  quantity: number;
+}
 
 export function CheckoutForm({
   subtotal,
   discount,
   allowCardPayment,
+  analyticsItems,
 }: {
   subtotal: number;
   discount: number;
   allowCardPayment: boolean;
+  analyticsItems: CheckoutAnalyticsItem[];
 }) {
   const [checkoutState, checkoutAction, isSubmitting] = useActionState(createOrderAction, initialCheckoutState);
   const [shippingState, calculateShipping, isCalculatingShipping] = useActionState(
@@ -32,8 +43,23 @@ export function CheckoutForm({
   const shippingCost = selectedMethod === "LOCAL_PICKUP" ? 0 : (selectedOption?.cost ?? 0);
   const total = Math.max(0, subtotal - discount) + shippingCost;
 
+  useEffect(() => {
+    trackEvent("begin_checkout", {
+      currency: "BRL",
+      value: Math.max(0, subtotal - discount),
+      items: analyticsItems.map((item) => toAnalyticsItem(item)),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <form action={checkoutAction} className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
+    <form
+      action={checkoutAction}
+      onSubmit={() =>
+        trackEvent("add_payment_info", { currency: "BRL", value: total, payment_type: paymentMethod })
+      }
+      className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]"
+    >
       <input type="hidden" name="shippingMethod" value={selectedMethod} />
       <input type="hidden" name="paymentMethod" value={paymentMethod} />
 

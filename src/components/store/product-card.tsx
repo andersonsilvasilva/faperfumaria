@@ -64,6 +64,9 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
           <AddToCartButton
             variantId={firstVariant.id}
             disabled={firstVariant.stockQty <= 0}
+            productName={product.name}
+            brandName={product.brand.name}
+            price={Number(product.price.toString())}
             className="mt-3 w-full rounded-sm border border-fa-black py-2 text-xs font-medium uppercase tracking-wide text-fa-black shadow-sm transition-colors hover:bg-fa-black hover:text-fa-white disabled:cursor-not-allowed disabled:opacity-50"
           />
         )}

@@ -36,10 +36,47 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "FA Perfumaria",
+  url: siteUrl,
+  logo: `${siteUrl}/brand/logo-fa-perfumaria-dourada.png`,
+  email: "Elielaraujo852@outlook.com",
+  telephone: "+55-47-98836-0043",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "R. Maracujá, 72 - Sertãozinho",
+    addressLocality: "Bombinhas",
+    addressRegion: "SC",
+    postalCode: "88215-000",
+    addressCountry: "BR",
+  },
+  sameAs: [
+    "https://www.instagram.com/elielaraujooficial/",
+    "https://www.facebook.com/eliel.araujo.505569",
+    "https://www.threads.com/@elielaraujooficial",
+  ],
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "FA Perfumaria",
+  url: siteUrl,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${siteUrl}/buscar?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
+};
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR" className={`${playfair.variable} ${montserrat.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-fa-off-white text-fa-black font-sans antialiased">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
         {children}
       </body>
     </html>

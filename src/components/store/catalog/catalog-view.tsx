@@ -3,6 +3,7 @@ import { Container } from "@/components/ui/container";
 import { ProductCard } from "@/components/store/product-card";
 import { CatalogFilters } from "@/components/store/catalog/catalog-filters";
 import { CatalogPagination } from "@/components/store/catalog/catalog-pagination";
+import { CatalogTracker } from "@/components/analytics/catalog-tracker";
 import { listProducts } from "@/modules/catalog/queries";
 import { parseCatalogParams, type RawSearchParams } from "@/modules/catalog/params";
 import type { ProductListParams } from "@/modules/catalog/queries";
@@ -31,6 +32,17 @@ export async function CatalogView({
 
   return (
     <Container className="py-10">
+      <CatalogTracker
+        listName={title}
+        searchTerm={params.search}
+        resultCount={total}
+        items={items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          brand: item.brand.name,
+          price: Number(item.price.toString()),
+        }))}
+      />
       <nav aria-label="Breadcrumb" className="text-xs text-fa-black/50">
         <Link href="/" className="hover:text-fa-gold">
           Início

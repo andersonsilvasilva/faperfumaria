@@ -9,6 +9,7 @@ import {
   updateCartItemQuantityAction,
   type CartActionState,
 } from "@/modules/cart/actions";
+import { trackEvent, toAnalyticsItem } from "@/lib/analytics";
 
 const initialState: CartActionState = { status: "idle" };
 
@@ -37,6 +38,21 @@ export function CartItemRow({ item }: { item: CartItemRowData }) {
     if (updateState.status === "success" || removeState.status === "success") {
       window.dispatchEvent(new Event("cart:updated"));
     }
+    if (removeState.status === "success") {
+      const analyticsItem = toAnalyticsItem({
+        id: item.variant.id,
+        name: item.variant.product.name,
+        brand: item.variant.product.brand.name,
+        price: item.variant.price,
+        quantity: item.quantity,
+      });
+      trackEvent("remove_from_cart", {
+        currency: "BRL",
+        value: item.variant.price * item.quantity,
+        items: [analyticsItem],
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateState, removeState]);
 
   const unitPrice = item.variant.price;
