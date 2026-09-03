@@ -8,7 +8,7 @@ export function HeroSection() {
       <Container className="grid items-center gap-12 md:grid-cols-2">
         <div>
           <p className="text-xs font-semibold tracking-[0.2em] text-fa-gold uppercase">FA Perfumaria</p>
-          <h1 className="mt-4 font-display text-4xl leading-tight text-fa-black md:text-5xl">
+          <h1 className="mt-4 font-display text-2xl leading-tight text-fa-black md:text-5xl">
             Sua presença começa pela
             <br />
             essência.
