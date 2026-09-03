@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
+// Nunca gerar em tempo de build — consulta o banco, e o banco de produção tem limite baixo de
+// conexões simultâneas (mesmo motivo da Home, ver commit "Home renderiza sempre dinâmica").
+export const dynamic = "force-dynamic";
+
 const STATIC_ROUTES = [
   "",
   "/loja",
