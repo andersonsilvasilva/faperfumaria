@@ -4,7 +4,9 @@ MySQL/MariaDB via Prisma 7 + `@prisma/adapter-mariadb` (driver `mariadb`, não `
 forma padrão do Prisma 7 para MySQL/MariaDB; ver `.claude/skills/prisma-database-setup/`).
 
 Client gerado em `src/generated/prisma` (path customizado no generator, não versionado).
-Singleton de conexão em `src/lib/prisma.ts`.
+Singleton de conexão em `src/lib/prisma.ts` — o cache em `globalThis` precisa valer em qualquer
+ambiente (produção incluída), não só fora dela; ver "Limite de conexões" em
+`docs/deployment.md` para o porquê.
 
 ## Ambientes: local (Laragon) vs. remoto (Hostinger)
 

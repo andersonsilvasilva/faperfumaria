@@ -2,6 +2,8 @@
 
 E-commerce premium da FA Perfumaria (Bombinhas/SC). Next.js (App Router) + TypeScript + Tailwind CSS + Prisma/MySQL.
 
+Em produção: https://faperfumaria.com.br/
+
 Especificação completa do produto: [`CLAUDE.md`](./CLAUDE.md).
 
 ## Stack
