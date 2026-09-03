@@ -11,9 +11,12 @@ import { WhatsAppSection } from "@/components/store/home/whatsapp-section";
 import { InstagramSection } from "@/components/store/home/instagram-section";
 import { NewsletterSection } from "@/components/store/home/newsletter-section";
 
-// Revalida periodicamente para refletir mudanças de produtos em destaque feitas no Admin
-// sem precisar de um novo deploy.
-export const revalidate = 300;
+// Renderização sempre dinâmica (nunca estática/ISR): a Home não pode depender de uma conexão
+// de banco bem-sucedida em tempo de BUILD — o banco de produção tem um limite baixo de conexões
+// simultâneas (ver docs/database.md) e, com o site já rodando, um novo build competindo por
+// conexão pode falhar (erro "pool failed to retrieve a connection from pool"). Mesmo padrão já
+// usado em todas as outras páginas da loja.
+export const dynamic = "force-dynamic";
 
 export default function HomePage() {
   return (
