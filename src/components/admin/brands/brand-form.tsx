@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ImageUploadField } from "@/components/admin/upload/image-upload-field";
 import type { BrandActionState } from "@/modules/admin/brands-actions";
 
 const initialState: BrandActionState = { status: "idle" };
@@ -14,6 +15,7 @@ export function BrandForm({
   brand?: { name: string; logoUrl: string | null; description: string | null };
 }) {
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const [logoUrl, setLogoUrl] = useState(brand?.logoUrl ?? "");
 
   return (
     <form action={formAction} className="max-w-md space-y-4">
@@ -32,16 +34,11 @@ export function BrandForm({
 
       <div>
         <label htmlFor="logoUrl" className="text-xs font-medium text-fa-black/70">
-          URL do logo (opcional)
+          Logo (opcional)
         </label>
-        <input
-          id="logoUrl"
-          name="logoUrl"
-          type="url"
-          defaultValue={brand?.logoUrl ?? ""}
-          placeholder="/brand/marcas/exemplo.png"
-          className="mt-1 h-10 w-full rounded-sm border border-fa-stone/40 px-3 text-sm focus:border-fa-gold focus:outline-none"
-        />
+        <div className="mt-1">
+          <ImageUploadField name="logoUrl" value={logoUrl} onChange={setLogoUrl} folder="marcas" />
+        </div>
       </div>
 
       <div>

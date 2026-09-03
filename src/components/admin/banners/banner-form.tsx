@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ImageUploadField } from "@/components/admin/upload/image-upload-field";
 import type { BannerActionState } from "@/modules/admin/banners-actions";
 
 interface BannerData {
@@ -35,6 +36,8 @@ export function BannerForm({
   banner?: BannerData;
 }) {
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const [desktopImage, setDesktopImage] = useState(banner?.desktopImage ?? "");
+  const [mobileImage, setMobileImage] = useState(banner?.mobileImage ?? "");
 
   return (
     <form action={formAction} className="max-w-lg space-y-4">
@@ -78,24 +81,20 @@ export function BannerForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={labelClass} htmlFor="desktopImage">
-            Imagem desktop (URL)
-          </label>
-          <input
-            id="desktopImage"
-            name="desktopImage"
-            required
-            defaultValue={banner?.desktopImage}
-            className={inputClass}
-          />
+      <div>
+        <label className={labelClass} htmlFor="desktopImage">
+          Imagem desktop
+        </label>
+        <div className="mt-1">
+          <ImageUploadField name="desktopImage" value={desktopImage} onChange={setDesktopImage} folder="banners" />
         </div>
-        <div>
-          <label className={labelClass} htmlFor="mobileImage">
-            Imagem mobile (opcional)
-          </label>
-          <input id="mobileImage" name="mobileImage" defaultValue={banner?.mobileImage ?? ""} className={inputClass} />
+      </div>
+      <div>
+        <label className={labelClass} htmlFor="mobileImage">
+          Imagem mobile (opcional)
+        </label>
+        <div className="mt-1">
+          <ImageUploadField name="mobileImage" value={mobileImage} onChange={setMobileImage} folder="banners" />
         </div>
       </div>
 

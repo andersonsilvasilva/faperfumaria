@@ -37,6 +37,9 @@ yarn-error.log*
 # credenciais sensíveis do cliente (nunca versionar)
 /Dados da Empresa.txt
 
+# uploads do Admin (produtos/marcas/banners) — conteúdo gerado em runtime, não código-fonte
+/public/uploads/
+
 # vercel
 .vercel
 

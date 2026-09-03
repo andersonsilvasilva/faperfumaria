@@ -40,8 +40,8 @@ ficam para uma fase futura — não criar agora para evitar complexidade sem uso
   editar, excluir). Categoria suporta hierarquia (`parentId`); excluir uma categoria com filhas
   só desvincula (`SetNull`), não bloqueia. **Marca com produtos vinculados não pode ser
   excluída** (`Product.brandId` é obrigatório, sem cascade) — o delete falha silenciosamente e a
-  linha continua na lista, o que já é sinal suficiente para uso interno; não há upload de
-  arquivo para o logo, só uma URL colada (mesma decisão de "Imagens" abaixo).
+  linha continua na lista, o que já é sinal suficiente para uso interno; o logo aceita upload
+  de arquivo ou URL colada (ver seção "Upload de imagens" abaixo).
 - **Produtos** (`/admin/produtos`, `.../novo`, `.../[id]`) — formulário único em seções
   (Informações/Preço/Fragrância/Variantes/Imagens/SEO), em
   `src/components/admin/products/product-form.tsx` +
@@ -58,8 +58,8 @@ ficam para uma fase futura — não criar agora para evitar complexidade sem uso
   - **Estoque inicial de uma variante nova é sempre 0** — o formulário de produto não grava
     `stockQty` diretamente; o admin ajusta em `/admin/estoque` logo depois, para manter uma
     única trilha de auditoria (`InventoryMovement`) para toda mudança de estoque.
-  - **Imagens não têm upload de arquivo** — apenas URL colada (nesta fase, sem storage
-    configurado); substituição completa da lista a cada save (sem histórico dependente).
+  - **Imagens aceitam upload de arquivo ou URL colada** (ver "Upload de imagens" abaixo);
+    substituição completa da lista a cada save (sem histórico dependente).
   - Excluir produto não existe como ação — "Desativar" (`isActive=false`) é a forma de remover
     um produto da vitrine sem arriscar quebrar FK de pedidos antigos.
 - **Avaliações** (`/admin/avaliacoes`) — moderação de avaliações de produto (seção 37 do
@@ -74,14 +74,36 @@ ficam para uma fase futura — não criar agora para evitar complexidade sem uso
 - **Cupons** (`/admin/cupons`, `.../novo`, `.../[id]`) — CRUD completo. Restrição por categoria
   é checkbox; por produto é uma lista de nomes exatos separados por vírgula (sem
   autocomplete/multi-select nesta fase — catálogo pequeno o suficiente para digitar o nome).
-- **Banners** (`/admin/banners`, `.../novo`, `.../[id]`) — CRUD completo. Mesma decisão de
-  "Imagens" dos produtos: URL colada, sem upload de arquivo.
+- **Banners** (`/admin/banners`, `.../novo`, `.../[id]`) — CRUD completo. Imagens (desktop/
+  mobile) aceitam upload de arquivo ou URL colada, mesmo campo reutilizável de "Imagens" dos
+  produtos.
 - **Newsletter** (`/admin/newsletter`) — somente leitura: lista de inscritos com opt-in de
   marketing, origem e data.
 - **Configurações** (`/admin/configuracoes`) — editor genérico de `StoreSetting` (chave + valor
   JSON em textarea), em vez de uma tela dedicada por configuração — hoje só existe
   `local_delivery_pricing` (ver `docs/integrations.md`), e novas configurações futuras não
   exigem uma nova tela, só uma nova chave.
+
+## Upload de imagens
+
+`POST /api/admin/upload` ([`src/app/api/admin/upload/route.ts`](../src/app/api/admin/upload/route.ts))
+recebe `multipart/form-data` (`file` + `folder`), valida sessão admin, tipo (JPEG/PNG/WEBP/GIF),
+tamanho (máx. 5MB) e pasta de destino (allowlist: `produtos`, `marcas`, `banners` — nunca aceita
+um valor arbitrário do cliente, para não permitir path traversal), grava em
+`/public/uploads/<pasta>/<uuid>.<ext>` e devolve a URL pública. Componente reutilizável:
+`src/components/admin/upload/image-upload-field.tsx` (campo de texto + botão de upload +
+preview) — usado em Produtos (imagens), Marcas (logo) e Banners (desktop/mobile). O campo de
+texto continua editável manualmente, então uma URL externa colada também funciona.
+
+**Sem storage em nuvem configurado** — grava direto no disco do servidor (`/public/uploads/`,
+fora do git, ver `.gitignore`). Isso funciona em qualquer hospedagem Node tradicional com disco
+persistente (o modelo esperado para a Hostinger, ver `docs/deployment.md`), mas **não
+funcionaria em hospedagem serverless** (disco efêmero, ex.: Vercel) — se a aplicação for para
+esse tipo de ambiente no futuro, essa rota precisa trocar para um provider de storage em nuvem
+(S3-compatível, etc.). Também importante: como o diretório de uploads não é versionado, ele
+**não é criado automaticamente ao clonar o repo em produção** (a rota cria com `mkdir
+recursive` na primeira vez que alguém faz upload) e **não tem backup automático** — garantir que
+a estratégia de backup do servidor de produção inclua `/public/uploads/`.
 
 ## Auditoria
 

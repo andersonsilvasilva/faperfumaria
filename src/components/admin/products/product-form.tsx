@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ImageUploadField } from "@/components/admin/upload/image-upload-field";
 import { INTENSITY_LABELS, INTENSITY_ORDER } from "@/lib/labels";
 import type { ProductActionState } from "@/modules/admin/products-actions";
 import type { AdminProductDetail } from "@/modules/admin/products-queries";
@@ -454,26 +455,23 @@ export function ProductForm({
 
       <section id="imagens" className="space-y-4">
         <h2 className="font-display text-lg text-fa-black">Imagens</h2>
-        <p className="text-xs text-fa-black/50">
-          Sem upload de arquivo nesta fase — informe a URL da imagem (ex.: já hospedada em
-          /public/brand/... ou um link externo).
-        </p>
         <div className="space-y-3">
           {images.map((image, index) => (
             <div key={index} className="grid grid-cols-1 gap-2 rounded-sm border border-fa-stone/20 p-3 sm:grid-cols-4">
-              <input
-                placeholder="URL da imagem"
-                value={image.url}
-                onChange={(e) => updateImage(index, { url: e.target.value })}
-                className={`${inputClass} sm:col-span-2`}
-              />
+              <div className="sm:col-span-2">
+                <ImageUploadField
+                  value={image.url}
+                  onChange={(url) => updateImage(index, { url })}
+                  folder="produtos"
+                />
+              </div>
               <input
                 placeholder="Texto alternativo"
                 value={image.altText}
                 onChange={(e) => updateImage(index, { altText: e.target.value })}
                 className={inputClass}
               />
-              <div className="flex items-center gap-4">
+              <div className="flex items-start gap-4 pt-2">
                 <label className="flex items-center gap-2 text-sm text-fa-black/70">
                   <input
                     type="radio"
