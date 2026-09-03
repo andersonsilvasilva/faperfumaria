@@ -17,6 +17,11 @@ export async function calculateShippingAction(
     return { status: "error", message: "Informe um CEP válido (8 dígitos)." };
   }
 
-  const options = await getShippingOptions(cep);
-  return { status: "success", options };
+  try {
+    const options = await getShippingOptions(cep);
+    return { status: "success", options };
+  } catch (error) {
+    console.error("Falha ao calcular opções de frete:", error);
+    return { status: "error", message: "Não foi possível calcular o frete agora. Tente novamente." };
+  }
 }

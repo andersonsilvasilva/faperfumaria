@@ -26,9 +26,13 @@ const DEFAULT_LOCAL_DELIVERY_PRICING: Record<string, number> = {
 const LOCAL_DELIVERY_SETTING_KEY = "local_delivery_pricing";
 
 async function getLocalDeliveryPricing(): Promise<Record<string, number>> {
-  const setting = await prisma.storeSetting.findUnique({ where: { key: LOCAL_DELIVERY_SETTING_KEY } });
-  if (setting && typeof setting.value === "object" && setting.value !== null) {
-    return setting.value as Record<string, number>;
+  try {
+    const setting = await prisma.storeSetting.findUnique({ where: { key: LOCAL_DELIVERY_SETTING_KEY } });
+    if (setting && typeof setting.value === "object" && setting.value !== null) {
+      return setting.value as Record<string, number>;
+    }
+  } catch (error) {
+    console.error("Falha ao buscar preços de entrega local, usando padrão:", error);
   }
   return DEFAULT_LOCAL_DELIVERY_PRICING;
 }
