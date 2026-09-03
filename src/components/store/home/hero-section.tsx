@@ -1,46 +1,68 @@
 import Image from "next/image";
 import { Container } from "@/components/ui/container";
 import { ButtonLink } from "@/components/ui/button";
+import { getActiveHeroBanner } from "@/modules/banners/queries";
 
-export function HeroSection() {
+export async function HeroSection() {
+  const banner = await getActiveHeroBanner();
+
   return (
     <section className="relative overflow-hidden py-16 md:py-24">
       <Container className="grid items-center gap-12 md:grid-cols-2">
         <div>
-          <p className="text-xs font-semibold tracking-[0.2em] text-fa-gold uppercase">FA Perfumaria</p>
-          <h1 className="mt-4 font-display text-2xl leading-tight text-fa-black md:text-5xl">
-            Sua presença começa pela
-            <br />
-            essência.
-          </h1>
+          <p className="text-xs font-semibold tracking-[0.2em] text-fa-gold uppercase">
+            {banner?.eyebrow || "FA Perfumaria"}
+          </p>
+          {banner ? (
+            <h1 className="mt-4 font-display text-2xl leading-tight text-fa-black md:text-5xl">{banner.title}</h1>
+          ) : (
+            <h1 className="mt-4 font-display text-2xl leading-tight text-fa-black md:text-5xl">
+              Sua presença começa pela
+              <br />
+              essência.
+            </h1>
+          )}
           <p className="mt-6 max-w-md text-fa-black/70">
-            Fragrâncias escolhidas para quem entende que um perfume vai além do aroma. Ele revela
-            personalidade, marca momentos e deixa uma impressão que permanece.
+            {banner?.subtitle ||
+              "Fragrâncias escolhidas para quem entende que um perfume vai além do aroma. Ele revela personalidade, marca momentos e deixa uma impressão que permanece."}
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <ButtonLink href="/loja">Explorar perfumes</ButtonLink>
-            <ButtonLink href="/descubra-sua-essencia" variant="secondary">
-              Encontrar minha fragrância
-            </ButtonLink>
+            {banner ? (
+              banner.ctaLabel && banner.ctaUrl && <ButtonLink href={banner.ctaUrl}>{banner.ctaLabel}</ButtonLink>
+            ) : (
+              <>
+                <ButtonLink href="/loja">Explorar perfumes</ButtonLink>
+                <ButtonLink href="/descubra-sua-essencia" variant="secondary">
+                  Encontrar minha fragrância
+                </ButtonLink>
+              </>
+            )}
           </div>
         </div>
 
         <div className="relative">
           {/* brilho dourado suave atrás da imagem */}
-          <div
-            aria-hidden
-            className="absolute -inset-8 -z-10 rounded-full bg-fa-gold/25 blur-3xl"
-          />
+          <div aria-hidden className="absolute -inset-8 -z-10 rounded-full bg-fa-gold/25 blur-3xl" />
 
           <div className="relative aspect-4/5 w-full overflow-hidden rounded-sm shadow-[0_40px_70px_-20px_rgba(11,11,11,0.45)] ring-1 ring-fa-gold/20">
             <Image
-              src="/brand/hero-destaque.png"
-              alt="Perfume em destaque sobre mármore, com estante de fragrâncias ao fundo"
+              src={banner ? banner.desktopImage : "/brand/hero-destaque.png"}
+              alt={banner?.title ?? "Perfume em destaque sobre mármore, com estante de fragrâncias ao fundo"}
               fill
               priority
-              className="object-cover"
+              className={banner?.mobileImage ? "hidden object-cover md:block" : "object-cover"}
               sizes="(min-width: 768px) 50vw, 100vw"
             />
+            {banner?.mobileImage && (
+              <Image
+                src={banner.mobileImage}
+                alt={banner.title}
+                fill
+                priority
+                className="object-cover md:hidden"
+                sizes="100vw"
+              />
+            )}
             {/* sombreamento sutil para dar profundidade sem competir com o produto */}
             <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-fa-black/30 via-transparent to-fa-black/10" />
             <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-fa-white/10" />
