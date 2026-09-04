@@ -70,7 +70,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
             productName={product.name}
             brandName={product.brand.name}
             price={Number(product.price.toString())}
-            className="mt-3 w-full rounded-sm border border-fa-black py-2 text-xs font-medium uppercase tracking-wide text-fa-black shadow-sm transition-colors hover:bg-fa-black hover:text-fa-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-3 w-full rounded-sm border border-fa-gold bg-fa-gold py-2 text-xs font-medium uppercase tracking-wide text-fa-black shadow-sm transition-colors hover:bg-fa-gold-light hover:border-fa-gold-light disabled:cursor-not-allowed disabled:border-fa-stone/30 disabled:bg-transparent disabled:text-fa-black/40"
           />
         )}
       </div>

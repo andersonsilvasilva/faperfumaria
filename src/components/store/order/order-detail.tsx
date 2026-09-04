@@ -5,6 +5,8 @@ import { formatPrice } from "@/lib/format";
 import { ORDER_STATUS_LABELS } from "@/lib/labels";
 import { SimulatePaymentButton } from "@/components/store/order/simulate-payment-button";
 import { PurchaseTracker } from "@/components/analytics/purchase-tracker";
+import { ReviewForm } from "@/components/store/product/review-form";
+import { getReviewEligibility } from "@/modules/reviews/queries";
 import type { Prisma } from "@/generated/prisma/client";
 
 const PAID_STATUSES = new Set(["PAID", "PREPARING", "SHIPPED", "DELIVERED"]);
@@ -21,13 +23,15 @@ const STATUS_BADGE_VARIANT: Record<string, "success" | "danger" | "outline" | "g
 };
 
 export const orderDetailInclude = {
-  items: true,
+  items: {
+    include: { variant: { include: { product: { select: { id: true, slug: true, name: true } } } } },
+  },
   payments: { orderBy: { createdAt: "desc" as const } },
 } satisfies Prisma.OrderInclude;
 
 export type OrderDetailData = Prisma.OrderGetPayload<{ include: typeof orderDetailInclude }>;
 
-export function OrderDetail({
+export async function OrderDetail({
   order,
   isConfirmation = false,
 }: {
@@ -39,6 +43,14 @@ export function OrderDetail({
   const pixPayload = latestPayment?.rawPayload as { qrCodeText?: string; qrCodeBase64?: string } | null;
   const qrCodeText = pixPayload?.qrCodeText;
   const qrCodeBase64 = pixPayload?.qrCodeBase64;
+
+  const reviewableProducts =
+    order.status === "DELIVERED"
+      ? Array.from(new Map(order.items.map((item) => [item.variant.product.id, item.variant.product])).values())
+      : [];
+  const reviewEligibilities = await Promise.all(
+    reviewableProducts.map((product) => getReviewEligibility(product.id)),
+  );
 
   return (
     <Container className="max-w-3xl py-16">
@@ -141,6 +153,28 @@ export function OrderDetail({
           </div>
         </dl>
       </div>
+
+      {reviewableProducts.length > 0 && (
+        <div className="mt-10 rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-fa-black/60">
+            Avalie seus produtos
+          </p>
+          <div className="mt-4 space-y-8 divide-y divide-fa-stone/15">
+            {reviewableProducts.map((product, index) => (
+              <div key={product.id} className={index === 0 ? "" : "pt-8"}>
+                <p className="font-display text-lg text-fa-black">{product.name}</p>
+                <div className="mt-3">
+                  <ReviewForm
+                    productId={product.id}
+                    productSlug={product.slug}
+                    eligibility={reviewEligibilities[index]}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 flex flex-wrap gap-4">
         <Link href="/loja" className="text-sm font-medium text-fa-black underline hover:text-fa-gold">
