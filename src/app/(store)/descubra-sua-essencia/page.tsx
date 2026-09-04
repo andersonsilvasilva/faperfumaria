@@ -4,7 +4,7 @@ import { EssenceQuiz } from "@/components/store/quiz/essence-quiz";
 
 export const metadata: Metadata = {
   title: "Descubra sua Essência",
-  description: "Responda 5 perguntas rápidas e descubra as fragrâncias com maior compatibilidade com você.",
+  description: "Responda 4 perguntas rápidas e descubra sua família olfativa ideal e as fragrâncias mais compatíveis com você.",
 };
 
 export default function DescubraSuaEssenciaPage() {
@@ -15,8 +15,8 @@ export default function DescubraSuaEssenciaPage() {
         Qual perfume combina com você?
       </h1>
       <p className="mt-4 max-w-xl text-fa-black/70">
-        Responda 5 perguntas rápidas e descubra as fragrâncias com maior compatibilidade com o seu
-        estilo.
+        Responda 4 perguntas rápidas e descubra sua família olfativa ideal, a concentração
+        recomendada e as fragrâncias com maior compatibilidade com o seu estilo.
       </p>
 
       <div className="mt-12">

@@ -2,14 +2,13 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { rankCandidates, type QuizAnswers, type QuizCandidate } from "@/modules/quiz/scoring";
+import { rankCandidates, resolveIdealProfile, type IdealProfile, type QuizAnswers, type QuizCandidate } from "@/modules/quiz/scoring";
 
 const answersSchema = z.object({
-  categorySlug: z.enum(["masculino", "feminino", "unissex"]),
-  personalitySlug: z.string().min(1),
-  occasionSlug: z.string().min(1),
-  intensity: z.enum(["SUAVE", "MODERADA", "MARCANTE", "INTENSA"]),
-  priceRangeValue: z.string().min(1),
+  moment: z.enum(["fresco", "intenso", "versatil"]),
+  style: z.enum(["natural", "classico", "sedutor"]),
+  fixation: z.enum(["EDC", "EDT", "EDP"]),
+  memory: z.enum(["citrico", "floral", "madeira", "doce"]),
 });
 
 export interface QuizResultItem {
@@ -23,7 +22,12 @@ export interface QuizResultItem {
   explanation: string;
 }
 
-export async function getEssenceRecommendations(rawAnswers: QuizAnswers): Promise<QuizResultItem[]> {
+export interface QuizResult {
+  profile: IdealProfile;
+  items: QuizResultItem[];
+}
+
+export async function getEssenceRecommendations(rawAnswers: QuizAnswers): Promise<QuizResult> {
   const answers = answersSchema.parse(rawAnswers);
 
   const products = await prisma.product.findMany({
@@ -31,7 +35,6 @@ export async function getEssenceRecommendations(rawAnswers: QuizAnswers): Promis
     include: {
       brand: true,
       images: { where: { isMain: true }, take: 1 },
-      categories: { include: { category: true } },
       olfactoryFamily: true,
       profileTags: { include: { tag: true } },
     },
@@ -39,10 +42,9 @@ export async function getEssenceRecommendations(rawAnswers: QuizAnswers): Promis
 
   const candidates: QuizCandidate[] = products.map((product) => ({
     id: product.id,
-    price: Number(product.price.toString()),
     intensity: product.intensity,
+    concentration: product.concentration,
     olfactoryFamilyName: product.olfactoryFamily?.name ?? null,
-    categorySlugs: product.categories.map((c) => c.category.slug),
     personalityTags: product.profileTags.filter((pt) => pt.tag.type === "PERSONALITY").map((pt) => pt.tag),
     occasionTags: product.profileTags.filter((pt) => pt.tag.type === "OCCASION").map((pt) => pt.tag),
   }));
@@ -50,7 +52,7 @@ export async function getEssenceRecommendations(rawAnswers: QuizAnswers): Promis
   const matches = rankCandidates(candidates, answers);
   const productById = new Map(products.map((product) => [product.id, product]));
 
-  return matches.map((match) => {
+  const items = matches.map((match) => {
     const product = productById.get(match.id)!;
     return {
       id: product.id,
@@ -63,4 +65,6 @@ export async function getEssenceRecommendations(rawAnswers: QuizAnswers): Promis
       explanation: match.explanation,
     };
   });
+
+  return { profile: resolveIdealProfile(answers), items };
 }

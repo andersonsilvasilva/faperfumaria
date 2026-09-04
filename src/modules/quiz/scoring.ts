@@ -1,13 +1,16 @@
 import type { Intensity } from "@/generated/prisma/client";
 import { INTENSITY_ORDER } from "@/lib/labels";
-import { PRICE_RANGES } from "@/modules/catalog/params";
+
+export type Moment = "fresco" | "intenso" | "versatil";
+export type Style = "natural" | "classico" | "sedutor";
+export type Fixation = "EDC" | "EDT" | "EDP";
+export type Memory = "citrico" | "floral" | "madeira" | "doce";
 
 export interface QuizAnswers {
-  categorySlug: string;
-  personalitySlug: string;
-  occasionSlug: string;
-  intensity: Intensity;
-  priceRangeValue: string;
+  moment: Moment;
+  style: Style;
+  fixation: Fixation;
+  memory: Memory;
 }
 
 interface Tag {
@@ -17,10 +20,9 @@ interface Tag {
 
 export interface QuizCandidate {
   id: string;
-  price: number;
   intensity: Intensity | null;
+  concentration: string | null;
   olfactoryFamilyName: string | null;
-  categorySlugs: string[];
   personalityTags: Tag[];
   occasionTags: Tag[];
 }
@@ -31,53 +33,88 @@ export interface QuizMatch {
   explanation: string;
 }
 
+export interface IdealProfile {
+  familyName: string;
+  concentrationLabel: string;
+}
+
+const FAMILY_BY_MEMORY: Record<Memory, string> = {
+  citrico: "Cítrico",
+  floral: "Floral",
+  madeira: "Amadeirado",
+  doce: "Gourmand",
+};
+
+const CONCENTRATION_BY_FIXATION: Record<Fixation, { label: string; keyword: string; intensity: Intensity }> = {
+  EDC: { label: "Eau de Cologne", keyword: "cologne", intensity: "SUAVE" },
+  EDT: { label: "Eau de Toilette", keyword: "toilette", intensity: "MODERADA" },
+  EDP: { label: "Eau de Parfum", keyword: "parfum", intensity: "INTENSA" },
+};
+
+const PERSONALITIES_BY_STYLE: Record<Style, string[]> = {
+  natural: ["fresca", "discreta"],
+  classico: ["elegante", "sofisticada"],
+  sedutor: ["sedutora", "marcante"],
+};
+
+const OCCASIONS_BY_MOMENT: Record<Moment, string[]> = {
+  fresco: ["dia-a-dia", "trabalho"],
+  intenso: ["noite", "encontros"],
+  versatil: ["trabalho", "presente"],
+};
+
 const WEIGHTS = {
-  category: 30,
-  personality: 20,
-  occasion: 20,
+  family: 35,
+  concentration: 20,
   intensityExact: 15,
   intensityAdjacent: 7,
-  price: 15,
+  style: 20,
+  moment: 10,
 } as const;
 
-const MAX_SCORE =
-  WEIGHTS.category + WEIGHTS.personality + WEIGHTS.occasion + WEIGHTS.intensityExact + WEIGHTS.price;
+const MAX_SCORE = WEIGHTS.family + WEIGHTS.concentration + WEIGHTS.intensityExact + WEIGHTS.style + WEIGHTS.moment;
 
 function intensityDistance(a: Intensity, b: Intensity) {
   return Math.abs(INTENSITY_ORDER.indexOf(a) - INTENSITY_ORDER.indexOf(b));
 }
 
-function isWithinPriceRange(price: number, rangeValue: string) {
-  const range = PRICE_RANGES.find((r) => r.value === rangeValue);
-  if (!range) return false;
-  if (range.min != null && price < range.min) return false;
-  if (range.max != null && price > range.max) return false;
-  return true;
+/** Família e concentração ideais, resolvidas direto das respostas — sempre existe um resultado
+ * de cabeçalho, mesmo que nenhum produto do catálogo seja um match perfeito. */
+export function resolveIdealProfile(answers: QuizAnswers): IdealProfile {
+  return {
+    familyName: FAMILY_BY_MEMORY[answers.memory],
+    concentrationLabel: CONCENTRATION_BY_FIXATION[answers.fixation].label,
+  };
 }
 
 function scoreCandidate(candidate: QuizCandidate, answers: QuizAnswers): number {
   let score = 0;
+  const profile = resolveIdealProfile(answers);
+  const targetIntensity = CONCENTRATION_BY_FIXATION[answers.fixation].intensity;
+  const concentrationKeyword = CONCENTRATION_BY_FIXATION[answers.fixation].keyword;
 
-  if (candidate.categorySlugs.includes(answers.categorySlug)) {
-    score += WEIGHTS.category;
+  if (candidate.olfactoryFamilyName === profile.familyName) {
+    score += WEIGHTS.family;
   }
 
-  if (candidate.personalityTags.some((tag) => tag.slug === answers.personalitySlug)) {
-    score += WEIGHTS.personality;
-  }
-
-  if (candidate.occasionTags.some((tag) => tag.slug === answers.occasionSlug)) {
-    score += WEIGHTS.occasion;
+  if (candidate.concentration?.toLowerCase().includes(concentrationKeyword)) {
+    score += WEIGHTS.concentration;
   }
 
   if (candidate.intensity) {
-    const distance = intensityDistance(candidate.intensity, answers.intensity);
+    const distance = intensityDistance(candidate.intensity, targetIntensity);
     if (distance === 0) score += WEIGHTS.intensityExact;
     else if (distance === 1) score += WEIGHTS.intensityAdjacent;
   }
 
-  if (isWithinPriceRange(candidate.price, answers.priceRangeValue)) {
-    score += WEIGHTS.price;
+  const stylePersonalities = PERSONALITIES_BY_STYLE[answers.style];
+  if (candidate.personalityTags.some((tag) => stylePersonalities.includes(tag.slug))) {
+    score += WEIGHTS.style;
+  }
+
+  const momentOccasions = OCCASIONS_BY_MOMENT[answers.moment];
+  if (candidate.occasionTags.some((tag) => momentOccasions.includes(tag.slug))) {
+    score += WEIGHTS.moment;
   }
 
   return score;
@@ -90,15 +127,15 @@ function buildExplanation(candidate: QuizCandidate, answers: QuizAnswers): strin
     parts.push(candidate.olfactoryFamilyName.toLowerCase());
   }
 
-  const matchedPersonality = candidate.personalityTags.find((tag) => tag.slug === answers.personalitySlug);
+  const stylePersonalities = PERSONALITIES_BY_STYLE[answers.style];
+  const matchedPersonality = candidate.personalityTags.find((tag) => stylePersonalities.includes(tag.slug));
   if (matchedPersonality) {
     parts.push(matchedPersonality.name.toLowerCase());
-  } else if (candidate.intensity) {
-    parts.push(candidate.intensity === answers.intensity ? "no ponto certo de intensidade" : "com boa fixação");
   }
 
   const traits = parts.length > 0 ? parts.join(", ") : "um perfil equilibrado";
-  const matchedOccasion = candidate.occasionTags.find((tag) => tag.slug === answers.occasionSlug);
+  const momentOccasions = OCCASIONS_BY_MOMENT[answers.moment];
+  const matchedOccasion = candidate.occasionTags.find((tag) => momentOccasions.includes(tag.slug));
 
   return matchedOccasion
     ? `Recomendamos esta fragrância por seu perfil ${traits}, especialmente indicada para ${matchedOccasion.name.toLowerCase()}.`
