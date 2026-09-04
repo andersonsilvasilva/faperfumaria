@@ -4,7 +4,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 import { requireAdmin } from "@/lib/require-admin";
 
-const ALLOWED_FOLDERS = ["produtos", "marcas", "banners"] as const;
+const ALLOWED_FOLDERS = ["produtos", "marcas", "banners", "configuracoes"] as const;
 type UploadFolder = (typeof ALLOWED_FOLDERS)[number];
 
 const ALLOWED_MIME_TYPES: Record<string, string> = {

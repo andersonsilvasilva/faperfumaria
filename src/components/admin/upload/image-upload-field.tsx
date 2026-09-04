@@ -12,7 +12,7 @@ export function ImageUploadField({
   name?: string;
   value: string;
   onChange: (url: string) => void;
-  folder: "produtos" | "marcas" | "banners";
+  folder: "produtos" | "marcas" | "banners" | "configuracoes";
   placeholder?: string;
 }) {
   const [isUploading, setIsUploading] = useState(false);

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getDashboardMetrics } from "@/modules/admin/dashboard-queries";
 import { MetricCard } from "@/components/admin/dashboard/metric-card";
-import { SalesBarChart } from "@/components/admin/dashboard/sales-bar-chart";
+import { SalesLineChart } from "@/components/admin/dashboard/sales-line-chart";
 import { formatPrice } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -36,9 +36,24 @@ export default async function AdminDashboardPage() {
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)] lg:col-span-2">
-          <h2 className="font-display text-lg text-fa-black">Vendas — últimos 30 dias</h2>
+          <h2 className="font-display text-lg text-fa-black">Faturamento e vendas — últimos 30 dias</h2>
           <div className="mt-4">
-            <SalesBarChart data={metrics.salesByDay} />
+            <SalesLineChart
+              series={[
+                {
+                  label: "Faturamento",
+                  color: "#c99724",
+                  format: (v) => formatPrice(v),
+                  data: metrics.salesByDay.map((d) => ({ date: d.date, value: d.total })),
+                },
+                {
+                  label: "Pedidos",
+                  color: "#0b0b0b",
+                  format: (v) => `${v}x`,
+                  data: metrics.salesByDay.map((d) => ({ date: d.date, value: d.count })),
+                },
+              ]}
+            />
           </div>
         </section>
 

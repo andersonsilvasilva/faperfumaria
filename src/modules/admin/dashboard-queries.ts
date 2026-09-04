@@ -19,7 +19,7 @@ export interface DashboardMetrics {
   newCustomersInPeriod: number;
   lowStockCount: number;
   topProducts: { name: string; quantity: number }[];
-  salesByDay: { date: string; total: number }[];
+  salesByDay: { date: string; total: number; count: number }[];
 }
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
@@ -54,16 +54,19 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const periodRevenue = periodOrders.reduce((sum, o) => sum + Number(o.total.toString()), 0);
   const periodOrderCount = periodOrders.length;
 
-  const salesByDayMap = new Map<string, number>();
+  const salesByDayMap = new Map<string, { total: number; count: number }>();
   for (let i = 0; i < 30; i++) {
     const day = new Date(periodStart);
     day.setDate(day.getDate() + i);
-    salesByDayMap.set(day.toISOString().slice(0, 10), 0);
+    salesByDayMap.set(day.toISOString().slice(0, 10), { total: 0, count: 0 });
   }
   for (const order of periodOrders) {
     if (!order.paidAt) continue;
     const key = order.paidAt.toISOString().slice(0, 10);
-    salesByDayMap.set(key, (salesByDayMap.get(key) ?? 0) + Number(order.total.toString()));
+    const entry = salesByDayMap.get(key) ?? { total: 0, count: 0 };
+    entry.total += Number(order.total.toString());
+    entry.count += 1;
+    salesByDayMap.set(key, entry);
   }
 
   const variantIds = topProductsRaw.map((row) => row.variantId);
@@ -86,6 +89,10 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       name: variantNameById.get(row.variantId) ?? "Produto removido",
       quantity: row._sum.quantity ?? 0,
     })),
-    salesByDay: Array.from(salesByDayMap.entries()).map(([date, total]) => ({ date, total })),
+    salesByDay: Array.from(salesByDayMap.entries()).map(([date, { total, count }]) => ({
+      date,
+      total,
+      count,
+    })),
   };
 }

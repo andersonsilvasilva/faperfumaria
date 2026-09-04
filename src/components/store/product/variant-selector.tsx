@@ -23,11 +23,13 @@ export function VariantSelector({
   productName,
   brandName,
   variants,
+  maxInstallments,
 }: {
   productId: string;
   productName?: string;
   brandName?: string;
   variants: PlainVariant[];
+  maxInstallments?: number;
 }) {
   const [selectedId, setSelectedId] = useState(variants[0]?.id);
   const [quantity, setQuantity] = useState(1);
@@ -104,7 +106,7 @@ export function VariantSelector({
       <div className="flex items-baseline gap-2">
         <span className="text-2xl font-semibold text-fa-black">{formatPrice(selected.price)}</span>
       </div>
-      <p className="mt-1 text-sm text-fa-black/60">{formatInstallments(selected.price)}</p>
+      <p className="mt-1 text-sm text-fa-black/60">{formatInstallments(selected.price, maxInstallments)}</p>
 
       <fieldset className="mt-5">
         <legend className="text-xs font-semibold uppercase tracking-wide text-fa-black/60">Volume</legend>

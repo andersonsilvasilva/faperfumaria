@@ -183,6 +183,8 @@ model Product {
   compareAtPrice  Decimal?  @db.Decimal(10, 2)
   promotionStart  DateTime?
   promotionEnd    DateTime?
+  // Opcional — se não informado, a loja usa o padrão de 3x sem juros (ver formatInstallments).
+  maxInstallments Int?
 
   olfactoryFamilyId String?
   intensity         Intensity?

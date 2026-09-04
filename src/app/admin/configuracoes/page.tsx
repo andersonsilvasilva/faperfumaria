@@ -5,6 +5,8 @@ import { MaintenanceToggleForm } from "@/components/admin/settings/maintenance-t
 import { getMaintenanceMode } from "@/modules/settings/maintenance";
 import { SiteBackgroundForm } from "@/components/admin/settings/site-background-form";
 import { getSiteBackground } from "@/modules/settings/site-background";
+import { FaviconForm } from "@/components/admin/settings/favicon-form";
+import { getFaviconUrl } from "@/modules/settings/favicon";
 
 export const metadata: Metadata = {
   title: "Configurações | Admin",
@@ -13,10 +15,11 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
-  const [settings, maintenance, siteBackground] = await Promise.all([
+  const [settings, maintenance, siteBackground, faviconUrl] = await Promise.all([
     listStoreSettings(),
     getMaintenanceMode(),
     getSiteBackground(),
+    getFaviconUrl(),
   ]);
 
   return (
@@ -42,6 +45,14 @@ export default async function AdminSettingsPage() {
         </p>
         <div className="mt-3">
           <SiteBackgroundForm background={siteBackground} />
+        </div>
+      </section>
+
+      <section className="mt-8 rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
+        <h2 className="font-display text-lg text-fa-black">Favicon</h2>
+        <p className="mt-1 text-xs text-fa-black/50">Ícone exibido na aba do navegador.</p>
+        <div className="mt-3">
+          <FaviconForm faviconUrl={faviconUrl} />
         </div>
       </section>
 

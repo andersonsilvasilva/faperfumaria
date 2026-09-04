@@ -61,7 +61,9 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
             </span>
           )}
         </div>
-        <p className="text-xs text-fa-black/50">{formatInstallments(product.price)}</p>
+        <p className="text-xs text-fa-black/50">
+          {formatInstallments(product.price, product.maxInstallments ?? undefined)}
+        </p>
 
         {firstVariant && (
           <AddToCartButton

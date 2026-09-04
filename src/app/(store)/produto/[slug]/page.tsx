@@ -149,6 +149,7 @@ export default async function ProdutoPage({
               productId={product.id}
               productName={product.name}
               brandName={product.brand.name}
+              maxInstallments={product.maxInstallments ?? undefined}
               variants={product.variants.map((variant) => ({
                 id: variant.id,
                 volumeMl: variant.volumeMl,

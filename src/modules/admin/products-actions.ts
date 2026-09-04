@@ -76,6 +76,14 @@ const productSchema = z.object({
   compareAtPrice: optionalNumber,
   promotionStart: optionalDate,
   promotionEnd: optionalDate,
+  maxInstallments: z
+    .string()
+    .optional()
+    .transform((v) => (v ? Number(v) : undefined))
+    .refine(
+      (v) => v === undefined || (Number.isInteger(v) && v >= 1 && v <= 24),
+      "Parcelamento deve ser um número inteiro entre 1 e 24.",
+    ),
 
   olfactoryFamilyId: z.string().optional().default(""),
   intensity: z.enum(INTENSITY_ORDER as [string, ...string[]]).optional().or(z.literal("")),
@@ -183,6 +191,7 @@ export async function createProductAction(
           compareAtPrice: data.compareAtPrice ?? null,
           promotionStart: data.promotionStart ?? null,
           promotionEnd: data.promotionEnd ?? null,
+          maxInstallments: data.maxInstallments ?? null,
           olfactoryFamilyId: data.olfactoryFamilyId || null,
           intensity: (data.intensity as (typeof INTENSITY_ORDER)[number]) || null,
           fixation: data.fixation || null,
@@ -285,6 +294,7 @@ export async function updateProductAction(
           compareAtPrice: data.compareAtPrice ?? null,
           promotionStart: data.promotionStart ?? null,
           promotionEnd: data.promotionEnd ?? null,
+          maxInstallments: data.maxInstallments ?? null,
           olfactoryFamilyId: data.olfactoryFamilyId || null,
           intensity: (data.intensity as (typeof INTENSITY_ORDER)[number]) || null,
           fixation: data.fixation || null,

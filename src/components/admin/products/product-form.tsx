@@ -269,6 +269,25 @@ export function ProductForm({
               className={inputClass}
             />
           </div>
+          <div>
+            <label className={labelClass} htmlFor="maxInstallments">
+              Parcelamento (opcional)
+            </label>
+            <input
+              id="maxInstallments"
+              name="maxInstallments"
+              type="number"
+              step="1"
+              min="1"
+              max="24"
+              placeholder="Padrão: 3x"
+              defaultValue={product?.maxInstallments ?? ""}
+              className={inputClass}
+            />
+            <p className="mt-1 text-xs text-fa-black/40">
+              Em quantas vezes sem juros mostrar na loja. Deixe em branco para usar o padrão (3x).
+            </p>
+          </div>
         </div>
       </section>
 

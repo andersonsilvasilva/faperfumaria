@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Montserrat } from "next/font/google";
+import { getFaviconUrl } from "@/modules/settings/favicon";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -15,7 +16,16 @@ const montserrat = Montserrat({
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const faviconUrl = await getFaviconUrl();
+
+  return {
+    ...baseMetadata,
+    ...(faviconUrl ? { icons: { icon: faviconUrl } } : {}),
+  };
+}
+
+const baseMetadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: "FA Perfumaria | Sua presença começa pela essência",
