@@ -6,6 +6,7 @@ import { AnalyticsScripts } from "@/components/analytics/analytics-scripts";
 import { MaintenancePage } from "@/components/store/maintenance-page";
 import { getMaintenanceMode } from "@/modules/settings/maintenance";
 import { getSiteBackground } from "@/modules/settings/site-background";
+import { BackToTopButton } from "@/components/store/back-to-top-button";
 import { auth } from "@/lib/auth";
 
 // Rotas que continuam acessíveis mesmo em manutenção — sem isso, um admin deslogado ficaria
@@ -40,6 +41,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        <BackToTopButton />
       </FavoritesProvider>
     </div>
   );
