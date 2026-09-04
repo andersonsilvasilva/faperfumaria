@@ -34,8 +34,30 @@ export function VariantSelector({
   const [state, formAction, isPending] = useActionState(addToCartAction, initialState);
   const { favoriteIds, toggle } = useFavorites();
   const [isTogglingFavorite, startFavoriteTransition] = useTransition();
+  const [linkCopied, setLinkCopied] = useState(false);
   const router = useRouter();
   const isFavorited = favoriteIds.has(productId);
+
+  async function handleShare() {
+    const url = window.location.href;
+    const title = productName ? `${productName} | FA Perfumaria` : "FA Perfumaria";
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch (error) {
+        // AbortError = usuário fechou a folha de compartilhamento de propósito, sem ação
+        // necessária. Qualquer outro erro (share existe mas falha por outro motivo) cai pro
+        // fallback de copiar o link, pra sempre dar algum retorno visível ao clique.
+        if (error instanceof Error && error.name === "AbortError") return;
+      }
+    }
+
+    await navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }
 
   function handleFavoriteClick() {
     startFavoriteTransition(async () => {
@@ -172,6 +194,13 @@ export function VariantSelector({
           }`}
         >
           {isFavorited ? "Favoritado" : "Favoritar"}
+        </button>
+        <button
+          type="button"
+          onClick={handleShare}
+          className="rounded-sm border border-fa-black px-5 py-3 text-sm font-medium uppercase tracking-wide text-fa-black shadow-sm hover:border-fa-gold hover:text-fa-gold"
+        >
+          {linkCopied ? "Link copiado!" : "Compartilhar"}
         </button>
       </div>
       {state.status === "error" && <p className="mt-2 text-sm text-red-600">{state.message}</p>}

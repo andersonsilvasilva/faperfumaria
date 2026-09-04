@@ -25,13 +25,16 @@ export async function generateMetadata({
 
   if (!product) return {};
 
+  const title = product.seoTitle || product.name;
+  const description = product.seoDescription || product.shortDescription || undefined;
+
   return {
-    title: product.name,
-    description: product.shortDescription ?? undefined,
+    title,
+    description,
     alternates: product.canonicalUrl ? { canonical: product.canonicalUrl } : undefined,
     openGraph: {
-      title: `${product.name} | FA Perfumaria`,
-      description: product.shortDescription ?? undefined,
+      title: product.seoTitle || `${product.name} | FA Perfumaria`,
+      description,
       images: product.images[0] ? [{ url: product.images[0].url }] : undefined,
     },
   };
@@ -161,7 +164,7 @@ export default async function ProdutoPage({
       <div className="mt-16 space-y-12">
         {product.shortDescription && (
           <section>
-            <h2 className="font-display text-2xl text-fa-black">Sobre esta fragrância</h2>
+            <h2 className="font-display text-2xl text-fa-black">Sobre este produto</h2>
             <p className="mt-3 max-w-2xl text-fa-black/70">
               {product.longDescription ?? product.shortDescription}
             </p>

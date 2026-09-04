@@ -15,7 +15,7 @@ const reviewSchema = z.object({
   productId: z.string().min(1),
   productSlug: z.string().min(1),
   rating: z.coerce.number().int().min(1).max(5),
-  comment: z.string().trim().min(10, "Conte um pouco mais sobre a fragrância (mínimo 10 caracteres)."),
+  comment: z.string().trim().min(10, "Conte um pouco mais sobre o produto (mínimo 10 caracteres)."),
 });
 
 export async function createReviewAction(

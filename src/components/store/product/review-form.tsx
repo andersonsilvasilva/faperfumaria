@@ -73,7 +73,7 @@ export function ReviewForm({
           required
           minLength={10}
           rows={4}
-          placeholder="Conte como foi sua experiência com esta fragrância..."
+          placeholder="Conte como foi sua experiência com este produto..."
           className="mt-1 w-full rounded-sm border border-fa-stone/40 px-3 py-2 text-sm focus:border-fa-gold focus:outline-none"
         />
       </div>
