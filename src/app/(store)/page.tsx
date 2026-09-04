@@ -28,8 +28,8 @@ export default function HomePage() {
       <ArabianBannerSection />
       <BestSellersSection />
       <DiscoverEssenceSection />
-      <GiftsSection />
       <AboutSection />
+      <GiftsSection />
       <WhatsAppSection />
       <InstagramSection />
       <NewsletterSection />
