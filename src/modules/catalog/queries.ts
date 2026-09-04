@@ -61,9 +61,19 @@ function buildOrderBy(sort?: ProductSort): Prisma.ProductOrderByWithRelationInpu
 function buildWhere(params: ProductListParams): Prisma.ProductWhereInput {
   const where: Prisma.ProductWhereInput = { isActive: true };
 
-  const categorySlugs = [...(params.categorySlug ? [params.categorySlug] : []), ...(params.categorySlugs ?? [])];
-  if (categorySlugs.length) {
-    where.categories = { some: { category: { slug: { in: categorySlugs } } } };
+  // categorySlug (categoria fixa da página, ex.: /acessorios) e categorySlugs (checkboxes do
+  // filtro) são combinados com AND — cada um restringe o resultado, nunca amplia. Dentro de
+  // categorySlugs (múltiplas categorias marcadas no filtro) continua sendo OR entre si, como
+  // esperado num filtro de múltipla escolha da mesma faceta.
+  const categoryConditions: Prisma.ProductWhereInput[] = [];
+  if (params.categorySlug) {
+    categoryConditions.push({ categories: { some: { category: { slug: params.categorySlug } } } });
+  }
+  if (params.categorySlugs?.length) {
+    categoryConditions.push({ categories: { some: { category: { slug: { in: params.categorySlugs } } } } });
+  }
+  if (categoryConditions.length) {
+    where.AND = categoryConditions;
   }
   if (params.brandSlugs?.length) {
     where.brand = { slug: { in: params.brandSlugs } };
