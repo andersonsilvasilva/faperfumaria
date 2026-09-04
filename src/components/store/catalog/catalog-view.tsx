@@ -5,7 +5,7 @@ import { CatalogFilters } from "@/components/store/catalog/catalog-filters";
 import { CatalogPagination } from "@/components/store/catalog/catalog-pagination";
 import { CatalogTracker } from "@/components/analytics/catalog-tracker";
 import { listProducts } from "@/modules/catalog/queries";
-import { parseCatalogParams, type RawSearchParams } from "@/modules/catalog/params";
+import { parseCatalogParams, toCatalogParamArray, type RawSearchParams } from "@/modules/catalog/params";
 import type { ProductListParams } from "@/modules/catalog/queries";
 
 interface CatalogViewProps {
@@ -23,8 +23,13 @@ export async function CatalogView({
   fixedCategorySlug,
   overrides,
 }: CatalogViewProps) {
+  // fixedCategorySlug é só o pré-selecionado ao entrar na página (ex.: /acessorios já chega
+  // com "Acessórios" marcado) — se o cliente mexer no filtro de categoria, a escolha dele vale
+  // sozinha, sem continuar somando com a categoria fixa por baixo (senão marcar outra categoria
+  // só restringe/zera o resultado em vez de trocar o que é mostrado).
+  const hasExplicitCategoryFilter = toCatalogParamArray(searchParams.categoria).length > 0;
   const params = parseCatalogParams(searchParams, {
-    categorySlug: fixedCategorySlug,
+    ...(hasExplicitCategoryFilter ? {} : { categorySlug: fixedCategorySlug }),
     ...overrides,
   });
 

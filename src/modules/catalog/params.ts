@@ -21,7 +21,7 @@ export const PRICE_RANGES = [
   { label: "Acima de R$500", value: "500+", min: 500, max: undefined },
 ] as const;
 
-function toArray(value: string | string[] | undefined): string[] {
+export function toCatalogParamArray(value: string | string[] | undefined): string[] {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
 }
@@ -30,28 +30,28 @@ export function parseCatalogParams(
   searchParams: RawSearchParams,
   overrides: Partial<ProductListParams> = {},
 ): ProductListParams {
-  const sortParam = toArray(searchParams.sort)[0];
+  const sortParam = toCatalogParamArray(searchParams.sort)[0];
   const sort = VALID_SORTS.includes(sortParam as ProductSort) ? (sortParam as ProductSort) : "relevancia";
 
-  const priceRangeValue = toArray(searchParams.preco)[0];
+  const priceRangeValue = toCatalogParamArray(searchParams.preco)[0];
   const priceRange = PRICE_RANGES.find((range) => range.value === priceRangeValue);
 
-  const intensities = toArray(searchParams.intensidade).filter((value): value is Intensity =>
+  const intensities = toCatalogParamArray(searchParams.intensidade).filter((value): value is Intensity =>
     VALID_INTENSITIES.includes(value as Intensity),
   );
 
-  const page = Number(toArray(searchParams.pagina)[0] ?? "1");
+  const page = Number(toCatalogParamArray(searchParams.pagina)[0] ?? "1");
 
   return {
     sort,
-    categorySlugs: toArray(searchParams.categoria),
-    brandSlugs: toArray(searchParams.marca),
-    olfactoryFamilySlugs: toArray(searchParams.familia),
-    tagSlugs: toArray(searchParams.ocasiao),
+    categorySlugs: toCatalogParamArray(searchParams.categoria),
+    brandSlugs: toCatalogParamArray(searchParams.marca),
+    olfactoryFamilySlugs: toCatalogParamArray(searchParams.familia),
+    tagSlugs: toCatalogParamArray(searchParams.ocasiao),
     intensities: intensities.length ? intensities : undefined,
     priceMin: priceRange?.min,
     priceMax: priceRange?.max,
-    search: toArray(searchParams.q)[0],
+    search: toCatalogParamArray(searchParams.q)[0],
     page: Number.isFinite(page) && page > 0 ? page : 1,
     ...overrides,
   };
@@ -65,7 +65,7 @@ export function buildCatalogQueryString(
 
   for (const [key, value] of Object.entries(searchParams)) {
     if (key === "pagina") continue;
-    for (const v of toArray(value)) params.append(key, v);
+    for (const v of toCatalogParamArray(value)) params.append(key, v);
   }
 
   for (const [key, value] of Object.entries(patch)) {
