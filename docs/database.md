@@ -5,8 +5,10 @@ forma padrão do Prisma 7 para MySQL/MariaDB; ver `.claude/skills/prisma-databas
 
 Client gerado em `src/generated/prisma` (path customizado no generator, não versionado).
 Singleton de conexão em `src/lib/prisma.ts` — o cache em `globalThis` precisa valer em qualquer
-ambiente (produção incluída), não só fora dela; ver "Limite de conexões" em
-`docs/deployment.md` para o porquê.
+ambiente (produção incluída), não só fora dela. Isso importava especialmente na hospedagem
+compartilhada usada no primeiro deploy (limite de conexões novas por hora); a VPS atual (ver
+`docs/deployment.md`) não tem esse limite, mas o singleton correto continua sendo a prática certa
+de qualquer forma.
 
 ## Ambientes: local (Laragon) vs. remoto (Hostinger)
 
