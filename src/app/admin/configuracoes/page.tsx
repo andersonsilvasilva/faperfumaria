@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { listStoreSettings } from "@/modules/admin/settings-queries";
 import { SettingForm } from "@/components/admin/settings/setting-form";
+import { MaintenanceToggleForm } from "@/components/admin/settings/maintenance-toggle-form";
+import { getMaintenanceMode } from "@/modules/settings/maintenance";
 
 export const metadata: Metadata = {
   title: "Configurações | Admin",
@@ -9,7 +11,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
-  const settings = await listStoreSettings();
+  const [settings, maintenance] = await Promise.all([listStoreSettings(), getMaintenanceMode()]);
 
   return (
     <div className="max-w-2xl">
@@ -18,6 +20,13 @@ export default async function AdminSettingsPage() {
         Configurações gerais da loja, guardadas como chave/valor (JSON). Ex.: preços de entrega
         local (<code>local_delivery_pricing</code>).
       </p>
+
+      <section className="mt-8 rounded-sm border border-fa-gold/40 bg-fa-gold/5 p-6">
+        <h2 className="font-display text-lg text-fa-black">Modo de manutenção</h2>
+        <div className="mt-3">
+          <MaintenanceToggleForm maintenance={maintenance} />
+        </div>
+      </section>
 
       <div className="mt-8 space-y-8">
         {settings.map((setting) => (
