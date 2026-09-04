@@ -167,7 +167,7 @@ export default async function ProdutoPage({
             <h2 className="font-display text-2xl text-fa-black">Sobre este produto</h2>
             {product.longDescription ? (
               <div
-                className="mt-3 max-w-2xl text-fa-black/70 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mt-3 [&_p:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-5"
+                className="mt-3 max-w-2xl wrap-break-word text-fa-black/70 [&_a]:break-all [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mt-3 [&_p:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-5"
                 dangerouslySetInnerHTML={{ __html: product.longDescription }}
               />
             ) : (
