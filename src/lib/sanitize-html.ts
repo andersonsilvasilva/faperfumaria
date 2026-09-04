@@ -14,5 +14,10 @@ export function sanitizeRichText(html: string): string {
     .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
     .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
     .replace(/(href|src)\s*=\s*"javascript:[^"]*"/gi, '$1="#"')
-    .replace(/(href|src)\s*=\s*'javascript:[^']*'/gi, "$1='#'");
+    .replace(/(href|src)\s*=\s*'javascript:[^']*'/gi, "$1='#'")
+    // O Quill costuma salvar espaços comuns como "&nbsp;"/U+00A0 (não-quebráveis). Um parágrafo
+    // inteiro assim vira uma única "palavra" gigante pro navegador, que quebra no meio de
+    // qualquer jeito pra não estourar a largura da tela — normaliza de volta pra espaço comum.
+    .replace(/&nbsp;/gi, " ")
+    .replace(/ /g, " ");
 }
