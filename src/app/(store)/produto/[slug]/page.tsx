@@ -162,12 +162,17 @@ export default async function ProdutoPage({
       </div>
 
       <div className="mt-16 space-y-12">
-        {product.shortDescription && (
+        {(product.longDescription || product.shortDescription) && (
           <section>
             <h2 className="font-display text-2xl text-fa-black">Sobre este produto</h2>
-            <p className="mt-3 max-w-2xl text-fa-black/70">
-              {product.longDescription ?? product.shortDescription}
-            </p>
+            {product.longDescription ? (
+              <div
+                className="mt-3 max-w-2xl text-fa-black/70 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mt-3 [&_p:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-5"
+                dangerouslySetInnerHTML={{ __html: product.longDescription }}
+              />
+            ) : (
+              <p className="mt-3 max-w-2xl text-fa-black/70">{product.shortDescription}</p>
+            )}
           </section>
         )}
 

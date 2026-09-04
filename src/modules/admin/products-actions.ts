@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { slugify } from "@/lib/slug";
 import { INTENSITY_ORDER } from "@/lib/labels";
+import { sanitizeRichText } from "@/lib/sanitize-html";
 
 export interface ProductActionState {
   status: "idle" | "error" | "success";
@@ -60,7 +61,12 @@ const imageSchema = z.object({
 const productSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome do produto."),
   brandId: z.string().min(1, "Selecione a marca."),
-  shortDescription: z.string().trim().optional().default(""),
+  shortDescription: z
+    .string()
+    .trim()
+    .max(500, "Descrição curta deve ter no máximo 500 caracteres.")
+    .optional()
+    .default(""),
   longDescription: z.string().trim().optional().default(""),
   isActive: z.literal("on").optional(),
   isFeatured: z.literal("on").optional(),
@@ -169,7 +175,7 @@ export async function createProductAction(
           slug: slugify(data.name),
           brandId: data.brandId,
           shortDescription: data.shortDescription || null,
-          longDescription: data.longDescription || null,
+          longDescription: data.longDescription ? sanitizeRichText(data.longDescription) : null,
           isActive: data.isActive === "on",
           isFeatured: data.isFeatured === "on",
           costPrice: data.costPrice,
@@ -271,7 +277,7 @@ export async function updateProductAction(
           slug: slugify(data.name),
           brandId: data.brandId,
           shortDescription: data.shortDescription || null,
-          longDescription: data.longDescription || null,
+          longDescription: data.longDescription ? sanitizeRichText(data.longDescription) : null,
           isActive: data.isActive === "on",
           isFeatured: data.isFeatured === "on",
           costPrice: data.costPrice,

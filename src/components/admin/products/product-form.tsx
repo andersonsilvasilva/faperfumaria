@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ImageUploadField } from "@/components/admin/upload/image-upload-field";
+import { RichTextEditor } from "@/components/admin/products/rich-text-editor";
 import { INTENSITY_LABELS, INTENSITY_ORDER } from "@/lib/labels";
 import type { ProductActionState } from "@/modules/admin/products-actions";
 import type { AdminProductDetail } from "@/modules/admin/products-queries";
@@ -92,6 +93,8 @@ export function ProductForm({
     product?.images.map((img) => ({ url: img.url, altText: img.altText ?? "", isMain: img.isMain })) ?? [],
   );
 
+  const [shortDescription, setShortDescription] = useState(product?.shortDescription ?? "");
+
   const selectedCategoryIds = new Set(product?.categories.map((c) => c.categoryId) ?? []);
   const selectedTagIds = new Set(product?.profileTags.map((t) => t.tagId) ?? []);
 
@@ -148,21 +151,16 @@ export function ProductForm({
             id="shortDescription"
             name="shortDescription"
             rows={2}
-            defaultValue={product?.shortDescription ?? ""}
+            maxLength={500}
+            value={shortDescription}
+            onChange={(e) => setShortDescription(e.target.value)}
             className={inputClass.replace("h-10", "py-2")}
           />
+          <p className="mt-1 text-right text-xs text-fa-black/40">{shortDescription.length}/500</p>
         </div>
         <div>
-          <label className={labelClass} htmlFor="longDescription">
-            Descrição longa
-          </label>
-          <textarea
-            id="longDescription"
-            name="longDescription"
-            rows={4}
-            defaultValue={product?.longDescription ?? ""}
-            className={inputClass.replace("h-10", "py-2")}
-          />
+          <label className={labelClass}>Descrição longa</label>
+          <RichTextEditor name="longDescription" defaultValue={product?.longDescription ?? ""} />
         </div>
 
         <div className="flex gap-6">
