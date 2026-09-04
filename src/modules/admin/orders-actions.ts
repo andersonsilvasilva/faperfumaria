@@ -11,14 +11,18 @@ export interface OrderStatusActionState {
   message?: string;
 }
 
-const NEXT_STATUSES = ["PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
+const NEXT_STATUSES = ["PAID", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
 
 /**
- * Transições permitidas pelo admin. PENDING_PAYMENT/PAYMENT_FAILED/REFUNDED não aparecem aqui
- * porque são consequência de pagamento (não uma decisão manual do admin), e não é possível
- * cancelar um pedido já enviado (isso exigiria um fluxo de devolução, fora do escopo do MVP).
+ * Transições permitidas pelo admin. PAYMENT_FAILED/REFUNDED não aparecem aqui porque são
+ * consequência de pagamento (não uma decisão manual do admin), e não é possível cancelar um
+ * pedido já enviado (isso exigiria um fluxo de devolução, fora do escopo do MVP).
+ *
+ * PENDING_PAYMENT → PAID só é permitido aqui para pedidos com pagamento na retirada (dinheiro) —
+ * PIX/cartão confirmam sozinhos via provider/webhook, nunca manualmente (ver checagem abaixo).
  */
 const ALLOWED_TRANSITIONS: Partial<Record<string, (typeof NEXT_STATUSES)[number][]>> = {
+  PENDING_PAYMENT: ["PAID"],
   PAID: ["PREPARING", "CANCELLED"],
   PREPARING: ["SHIPPED", "CANCELLED"],
   SHIPPED: ["DELIVERED"],
@@ -44,7 +48,10 @@ export async function updateOrderStatusAction(
   }
   const { orderId, nextStatus, carrier, trackingCode } = parsed.data;
 
-  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true, payments: true },
+  });
   if (!order) return { status: "error", message: "Pedido não encontrado." };
 
   const allowed = ALLOWED_TRANSITIONS[order.status] ?? [];
@@ -55,6 +62,14 @@ export async function updateOrderStatusAction(
     };
   }
 
+  const cashPayment = order.payments.find((p) => p.method === "CASH" && p.status === "PENDING");
+  if (nextStatus === "PAID" && !cashPayment) {
+    return {
+      status: "error",
+      message: "Confirmação manual de pagamento só é permitida para pedidos com pagamento na retirada (dinheiro).",
+    };
+  }
+
   const now = new Date();
 
   await prisma.$transaction(async (tx) => {
@@ -62,11 +77,25 @@ export async function updateOrderStatusAction(
       where: { id: orderId },
       data: {
         status: nextStatus,
+        ...(nextStatus === "PAID" ? { paidAt: now } : {}),
         ...(nextStatus === "SHIPPED" ? { shippedAt: now } : {}),
         ...(nextStatus === "DELIVERED" ? { deliveredAt: now } : {}),
         ...(nextStatus === "CANCELLED" ? { cancelledAt: now } : {}),
       },
     });
+
+    if (nextStatus === "PAID" && cashPayment) {
+      await tx.payment.update({ where: { id: cashPayment.id }, data: { status: "APPROVED" } });
+      await tx.inventoryMovement.createMany({
+        data: order.items.map((item) => ({
+          variantId: item.variantId,
+          type: "SALE" as const,
+          quantity: -item.quantity,
+          orderId,
+          userId: admin.userId,
+        })),
+      });
+    }
 
     if (nextStatus === "SHIPPED") {
       await tx.shipment.upsert({
@@ -118,7 +147,7 @@ export async function updateOrderStatusAction(
     });
   });
 
-  await sendOrderEmail(orderId, nextStatus);
+  await sendOrderEmail(orderId, nextStatus === "PAID" ? "PAYMENT_APPROVED" : nextStatus);
 
   revalidatePath(`/admin/pedidos/${orderId}`);
   revalidatePath("/admin/pedidos");

@@ -66,6 +66,13 @@ export function CheckoutForm({
   const stateRef = useRef<HTMLInputElement>(null);
   const numberRef = useRef<HTMLInputElement>(null);
 
+  const handleShippingSelect = (method: string) => {
+    setSelectedMethod(method);
+    if (method !== "LOCAL_PICKUP" && paymentMethod === "CASH") {
+      setPaymentMethod("PIX");
+    }
+  };
+
   const selectedOption = shippingState.options?.find((o) => o.method === selectedMethod);
   const shippingCost = selectedMethod === "LOCAL_PICKUP" ? 0 : (selectedOption?.cost ?? 0);
   const total = Math.max(0, subtotal - discount) + shippingCost;
@@ -213,7 +220,7 @@ export function CheckoutForm({
               label="Retirar na loja — R. Maracujá, 72, Sertãozinho, Bombinhas/SC"
               cost={0}
               selected={selectedMethod === "LOCAL_PICKUP"}
-              onSelect={setSelectedMethod}
+              onSelect={handleShippingSelect}
             />
             {shippingState.options
               ?.filter((o) => o.method !== "LOCAL_PICKUP")
@@ -225,7 +232,7 @@ export function CheckoutForm({
                   cost={option.cost}
                   estimatedDays={option.estimatedDays}
                   selected={selectedMethod === option.method}
-                  onSelect={setSelectedMethod}
+                  onSelect={handleShippingSelect}
                 />
               ))}
           </fieldset>
@@ -281,6 +288,16 @@ export function CheckoutForm({
                   onChange={() => setPaymentMethod("CARD")}
                 />
                 Cartão de crédito
+              </label>
+            )}
+            {selectedMethod === "LOCAL_PICKUP" && (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  checked={paymentMethod === "CASH"}
+                  onChange={() => setPaymentMethod("CASH")}
+                />
+                Pagamento na retirada (dinheiro)
               </label>
             )}
           </div>

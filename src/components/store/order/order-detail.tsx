@@ -40,6 +40,7 @@ export async function OrderDetail({
 }) {
   const latestPayment = order.payments[0];
   const isPixPending = latestPayment?.method === "PIX" && latestPayment.status === "PENDING";
+  const isCashPending = latestPayment?.method === "CASH" && latestPayment.status === "PENDING";
   const pixPayload = latestPayment?.rawPayload as { qrCodeText?: string; qrCodeBase64?: string } | null;
   const qrCodeText = pixPayload?.qrCodeText;
   const qrCodeBase64 = pixPayload?.qrCodeBase64;
@@ -113,6 +114,16 @@ export async function OrderDetail({
               <SimulatePaymentButton orderNumber={order.orderNumber} />
             </div>
           )}
+        </div>
+      )}
+
+      {isCashPending && (
+        <div className="mt-8 rounded-sm border border-fa-gold/40 bg-fa-gold/10 p-6 text-center">
+          <p className="font-display text-lg text-fa-black">Pagamento na retirada</p>
+          <p className="mt-2 text-sm text-fa-black/70">
+            Pague em dinheiro no balcão da FA Perfumaria ao retirar seu pedido — R. Maracujá, 72,
+            Sertãozinho, Bombinhas/SC.
+          </p>
         </div>
       )}
 

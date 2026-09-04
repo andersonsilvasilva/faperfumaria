@@ -6,6 +6,7 @@ import { ORDER_STATUS_LABELS } from "@/lib/labels";
 import type { OrderStatus } from "@/generated/prisma/client";
 
 const NEXT_STATUS_OPTIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  PENDING_PAYMENT: ["PAID"],
   PAID: ["PREPARING", "CANCELLED"],
   PREPARING: ["SHIPPED", "CANCELLED"],
   SHIPPED: ["DELIVERED"],
@@ -13,9 +14,19 @@ const NEXT_STATUS_OPTIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
 
 const initialState: OrderStatusActionState = { status: "idle" };
 
-export function OrderStatusForm({ orderId, currentStatus }: { orderId: string; currentStatus: OrderStatus }) {
+export function OrderStatusForm({
+  orderId,
+  currentStatus,
+  canConfirmCashPayment = false,
+}: {
+  orderId: string;
+  currentStatus: OrderStatus;
+  canConfirmCashPayment?: boolean;
+}) {
   const [state, formAction, isPending] = useActionState(updateOrderStatusAction, initialState);
-  const options = NEXT_STATUS_OPTIONS[currentStatus] ?? [];
+  const options = (NEXT_STATUS_OPTIONS[currentStatus] ?? []).filter(
+    (option) => option !== "PAID" || canConfirmCashPayment,
+  );
   const [nextStatus, setNextStatus] = useState<OrderStatus | "">(options[0] ?? "");
 
   if (options.length === 0) {

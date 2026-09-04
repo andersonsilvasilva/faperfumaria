@@ -27,6 +27,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   if (!order) notFound();
 
   const hasAddress = order.shippingMethod !== "LOCAL_PICKUP";
+  const canConfirmCashPayment = order.payments.some((p) => p.method === "CASH" && p.status === "PENDING");
 
   return (
     <div className="max-w-4xl">
@@ -135,7 +136,11 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
             <h2 className="font-display text-lg text-fa-black">Atualizar status</h2>
             <div className="mt-4">
-              <OrderStatusForm orderId={order.id} currentStatus={order.status} />
+              <OrderStatusForm
+                orderId={order.id}
+                currentStatus={order.status}
+                canConfirmCashPayment={canConfirmCashPayment}
+              />
             </div>
           </section>
         </div>

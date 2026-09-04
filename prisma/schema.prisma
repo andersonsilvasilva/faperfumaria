@@ -431,6 +431,7 @@ model OrderItem {
 enum PaymentMethod {
   PIX
   CARD
+  CASH
 }
 
 enum PaymentStatus {

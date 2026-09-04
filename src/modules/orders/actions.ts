@@ -29,7 +29,7 @@ const checkoutSchema = z
     contactEmail: z.email("E-mail inválido."),
     contactPhone: z.string().trim().min(8, "Telefone inválido."),
     shippingMethod: z.enum(["LOCAL_PICKUP", "LOCAL_DELIVERY", "NATIONAL"]),
-    paymentMethod: z.enum(["PIX", "CARD"]),
+    paymentMethod: z.enum(["PIX", "CARD", "CASH"]),
     cep: z.string().trim().optional().default(""),
     street: z.string().trim().optional().default(""),
     number: z.string().trim().optional().default(""),
@@ -53,6 +53,13 @@ const checkoutSchema = z
           ctx.addIssue({ code: "custom", path: [field], message: "Campo obrigatório." });
         }
       }
+    }
+    if (data.paymentMethod === "CASH" && data.shippingMethod !== "LOCAL_PICKUP") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["paymentMethod"],
+        message: "Pagamento na retirada só está disponível para retirada na loja.",
+      });
     }
   });
 
@@ -219,9 +226,14 @@ export async function createOrderAction(
   // Pedido já criado e estoque reservado — problemas no pagamento a partir daqui não devem
   // apagar o pedido; o cliente pode tentar pagar novamente a partir da página de confirmação.
   try {
-    const provider = getPaymentProvider();
-
-    if (data.paymentMethod === "PIX") {
+    if (data.paymentMethod === "CASH") {
+      // Sem provider envolvido: o pagamento acontece em dinheiro na retirada, e um admin
+      // confirma manualmente quando o cliente aparece na loja (ver updateOrderStatusAction).
+      await prisma.payment.create({
+        data: { orderId, provider: "cash", method: "CASH", status: "PENDING", amount: total },
+      });
+    } else if (data.paymentMethod === "PIX") {
+      const provider = getPaymentProvider();
       const pix = await provider.createPixPayment({
         orderId,
         orderNumber,
@@ -243,6 +255,7 @@ export async function createOrderAction(
         },
       });
     } else {
+      const provider = getPaymentProvider();
       const card = await provider.createCardPayment({
         orderId,
         orderNumber,
