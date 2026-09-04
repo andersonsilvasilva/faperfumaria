@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { formatInstallments, formatPrice } from "@/lib/format";
+import { formatInstallments, formatPrice, formatVariantLabel } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { addToCartAction, type CartActionState } from "@/modules/cart/actions";
 import { useFavorites } from "@/components/store/favorites/favorites-provider";
@@ -10,7 +10,8 @@ import { trackEvent, toAnalyticsItem } from "@/lib/analytics";
 
 export interface PlainVariant {
   id: string;
-  volumeMl: number;
+  volumeMl: number | null;
+  variantLabel: string | null;
   price: number;
   stockQty: number;
 }
@@ -101,7 +102,7 @@ export function VariantSelector({
                   : "border-fa-stone/40 text-fa-black shadow-sm hover:border-fa-black"
               }`}
             >
-              {variant.volumeMl}ml
+              {formatVariantLabel(variant)}
             </button>
           ))}
         </div>

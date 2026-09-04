@@ -10,6 +10,7 @@ import { getShippingOptions } from "@/modules/shipping/provider";
 import { validateCoupon } from "@/modules/coupons/validate";
 import { generateOrderNumber } from "@/modules/orders/order-number";
 import { getPaymentProvider } from "@/modules/payments";
+import { formatVariantLabel } from "@/lib/format";
 import { sendOrderEmail } from "@/modules/email/send-order-email";
 
 export interface CheckoutActionState {
@@ -172,7 +173,7 @@ export async function createOrderAction(
             create: cartWithItems.items.map((item) => ({
               variantId: item.variant.id,
               productNameSnapshot: item.variant.product.name,
-              variantLabelSnapshot: `${item.variant.volumeMl}ml`,
+              variantLabelSnapshot: formatVariantLabel(item.variant),
               unitPrice: item.variant.price,
               quantity: item.quantity,
               totalPrice: Number(item.variant.price.toString()) * item.quantity,

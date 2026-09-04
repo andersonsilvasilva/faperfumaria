@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { listInventoryForAdmin } from "@/modules/admin/inventory-queries";
 import { StockAdjustForm } from "@/components/admin/inventory/stock-adjust-form";
 import { Badge } from "@/components/ui/badge";
+import { formatVariantLabel } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Estoque | Admin",
@@ -69,7 +70,7 @@ export default async function AdminInventoryPage({
                 <tr key={variant.id} className="hover:bg-fa-off-white/60">
                   <td className="px-4 py-3 text-fa-black">
                     {variant.product.name}
-                    <span className="ml-2 text-xs text-fa-black/40">{variant.volumeMl}ml</span>
+                    <span className="ml-2 text-xs text-fa-black/40">{formatVariantLabel(variant)}</span>
                     <br />
                     <span className="text-xs text-fa-black/40">{variant.product.brand.name}</span>
                   </td>

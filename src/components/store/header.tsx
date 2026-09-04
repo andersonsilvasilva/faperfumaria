@@ -13,6 +13,7 @@ const mainNav = [
   { label: "Árabes", href: "/arabes" },
   { label: "Decants", href: "/decants" },
   { label: "Kits & Presentes", href: "/kits" },
+  { label: "Acessórios", href: "/acessorios" },
   { label: "Ofertas", href: "/ofertas" },
   { label: "Sobre a FA", href: "/sobre" },
 ];

@@ -35,7 +35,7 @@ export async function listProductsForAdmin({
 
 const adminProductDetailInclude = {
   images: { orderBy: { position: "asc" as const } },
-  variants: { orderBy: { volumeMl: "asc" as const } },
+  variants: { orderBy: [{ volumeMl: "asc" as const }, { createdAt: "asc" as const }] },
   categories: true,
   fragranceNotes: { include: { note: true } },
   profileTags: true,

@@ -149,6 +149,7 @@ export default async function ProdutoPage({
               variants={product.variants.map((variant) => ({
                 id: variant.id,
                 volumeMl: variant.volumeMl,
+                variantLabel: variant.variantLabel,
                 price: Number(variant.price),
                 stockQty: variant.stockQty,
               }))}
@@ -167,12 +168,14 @@ export default async function ProdutoPage({
           </section>
         )}
 
-        <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
-          <h2 className="font-display text-2xl text-fa-black">Pirâmide olfativa</h2>
-          <div className="mt-4">
-            <FragrancePyramid notes={product.fragranceNotes} />
-          </div>
-        </section>
+        {product.fragranceNotes.length > 0 && (
+          <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
+            <h2 className="font-display text-2xl text-fa-black">Pirâmide olfativa</h2>
+            <div className="mt-4">
+              <FragrancePyramid notes={product.fragranceNotes} />
+            </div>
+          </section>
+        )}
 
         {personalityTags.length > 0 && (
           <section>
@@ -200,6 +203,11 @@ export default async function ProdutoPage({
           </section>
         )}
 
+        {(product.olfactoryFamily ||
+          product.intensity ||
+          product.concentration ||
+          product.fixation ||
+          product.projection) && (
         <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
           <h2 className="font-display text-2xl text-fa-black">Informações técnicas</h2>
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-4">
@@ -239,6 +247,7 @@ export default async function ProdutoPage({
             )}
           </dl>
         </section>
+        )}
 
         <section>
           <h2 className="font-display text-2xl text-fa-black">Avaliações</h2>

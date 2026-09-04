@@ -62,6 +62,7 @@ export default async function CarrinhoPage() {
                 variant: {
                   id: item.variant.id,
                   volumeMl: item.variant.volumeMl,
+                  variantLabel: item.variant.variantLabel,
                   price: Number(item.variant.price.toString()),
                   stockQty: item.variant.stockQty,
                   product: {

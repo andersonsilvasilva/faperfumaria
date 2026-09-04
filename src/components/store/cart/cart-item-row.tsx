@@ -3,7 +3,7 @@
 import { useActionState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatVariantLabel } from "@/lib/format";
 import {
   removeCartItemAction,
   updateCartItemQuantityAction,
@@ -18,7 +18,8 @@ export interface CartItemRowData {
   quantity: number;
   variant: {
     id: string;
-    volumeMl: number;
+    volumeMl: number | null;
+    variantLabel: string | null;
     price: number;
     stockQty: number;
     product: {
@@ -82,7 +83,7 @@ export function CartItemRow({ item }: { item: CartItemRowData }) {
           >
             {item.variant.product.name}
           </Link>
-          <p className="text-xs text-fa-black/50">{item.variant.volumeMl}ml</p>
+          <p className="text-xs text-fa-black/50">{formatVariantLabel(item.variant)}</p>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-4">

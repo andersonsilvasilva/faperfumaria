@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { formatInstallments, formatPrice } from "@/lib/format";
+import { formatInstallments, formatPrice, formatVariantLabel } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { AddToCartButton } from "@/components/store/cart/add-to-cart-button";
 import { FavoriteButton } from "@/components/store/favorites/favorite-button";
@@ -51,7 +51,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
         >
           {product.name}
         </Link>
-        {firstVariant && <p className="text-xs text-fa-black/50">{firstVariant.volumeMl}ml</p>}
+        {firstVariant && <p className="text-xs text-fa-black/50">{formatVariantLabel(firstVariant)}</p>}
 
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-lg font-semibold text-fa-black">{formatPrice(product.price)}</span>

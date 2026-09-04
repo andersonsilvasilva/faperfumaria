@@ -29,7 +29,10 @@ export interface ProductListParams {
 const productCardInclude = {
   brand: true,
   images: { where: { isMain: true }, take: 1 },
-  variants: { where: { isActive: true }, orderBy: { volumeMl: "asc" as const } },
+  variants: {
+    where: { isActive: true },
+    orderBy: [{ volumeMl: "asc" as const }, { createdAt: "asc" as const }],
+  },
   categories: { include: { category: true } },
 } satisfies Prisma.ProductInclude;
 
@@ -175,7 +178,10 @@ export const getOccasionTags = unstable_cache(
 const productDetailInclude = {
   brand: true,
   images: { orderBy: { position: "asc" as const } },
-  variants: { where: { isActive: true }, orderBy: { volumeMl: "asc" as const } },
+  variants: {
+    where: { isActive: true },
+    orderBy: [{ volumeMl: "asc" as const }, { createdAt: "asc" as const }],
+  },
   categories: { include: { category: true } },
   olfactoryFamily: true,
   fragranceNotes: { include: { note: true } },

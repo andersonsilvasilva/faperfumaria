@@ -19,27 +19,37 @@ const optionalNumber = z
   .transform((v) => (v ? Number(v) : undefined))
   .refine((v) => v === undefined || Number.isFinite(v), "Valor numérico inválido.");
 
-const optionalPositiveInt = z
-  .string()
-  .optional()
-  .transform((v) => (v ? Number(v) : undefined))
-  .refine((v) => v === undefined || (Number.isInteger(v) && v > 0), "Peso inválido.");
+function optionalPositiveIntWithMessage(message: string) {
+  return z
+    .string()
+    .optional()
+    .transform((v) => (v ? Number(v) : undefined))
+    .refine((v) => v === undefined || (Number.isInteger(v) && v > 0), message);
+}
+
+const optionalPositiveInt = optionalPositiveIntWithMessage("Peso inválido.");
 
 const optionalDate = z
   .string()
   .optional()
   .transform((v) => (v ? new Date(v) : undefined));
 
-const variantSchema = z.object({
-  id: z.string().optional(),
-  volumeMl: z.coerce.number().int().positive("Volume inválido."),
-  sku: z.string().trim().min(1, "SKU obrigatório."),
-  price: z.coerce.number().positive("Preço da variante inválido."),
-  minStockQty: z.coerce.number().int().min(0).default(3),
-  barcode: z.string().trim().optional().default(""),
-  weightGrams: optionalPositiveInt,
-  isActive: z.boolean().default(true),
-});
+const variantSchema = z
+  .object({
+    id: z.string().optional(),
+    volumeMl: optionalPositiveIntWithMessage("Volume inválido."),
+    variantLabel: z.string().trim().optional().default(""),
+    sku: z.string().trim().min(1, "SKU obrigatório."),
+    price: z.coerce.number().positive("Preço da variante inválido."),
+    minStockQty: z.coerce.number().int().min(0).default(3),
+    barcode: z.string().trim().optional().default(""),
+    weightGrams: optionalPositiveInt,
+    isActive: z.boolean().default(true),
+  })
+  .refine((v) => v.volumeMl !== undefined || v.variantLabel, {
+    message: "Informe o volume (ml) ou um rótulo para a variante (ex.: tamanho, cor).",
+    path: ["volumeMl"],
+  });
 
 const imageSchema = z.object({
   url: z.string().trim().min(1, "URL da imagem obrigatória."),
@@ -179,7 +189,8 @@ export async function createProductAction(
           profileTags: { create: data.profileTagIds.map((tagId) => ({ tagId })) },
           variants: {
             create: variantsResult.data.map((v) => ({
-              volumeMl: v.volumeMl,
+              volumeMl: v.volumeMl ?? null,
+              variantLabel: v.variantLabel || null,
               sku: v.sku,
               price: v.price,
               minStockQty: v.minStockQty,
@@ -301,7 +312,8 @@ export async function updateProductAction(
           await tx.productVariant.update({
             where: { id: variant.id },
             data: {
-              volumeMl: variant.volumeMl,
+              volumeMl: variant.volumeMl ?? null,
+              variantLabel: variant.variantLabel || null,
               sku: variant.sku,
               price: variant.price,
               minStockQty: variant.minStockQty,
@@ -314,7 +326,8 @@ export async function updateProductAction(
           await tx.productVariant.create({
             data: {
               productId,
-              volumeMl: variant.volumeMl,
+              volumeMl: variant.volumeMl ?? null,
+              variantLabel: variant.variantLabel || null,
               sku: variant.sku,
               price: variant.price,
               minStockQty: variant.minStockQty,

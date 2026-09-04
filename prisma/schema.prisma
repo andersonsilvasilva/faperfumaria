@@ -230,7 +230,8 @@ model ProductCategory {
 model ProductVariant {
   id           String   @id @default(cuid())
   productId    String
-  volumeMl     Int
+  volumeMl     Int?
+  variantLabel String?
   sku          String   @unique
   barcode      String?
   price        Decimal  @db.Decimal(10, 2)

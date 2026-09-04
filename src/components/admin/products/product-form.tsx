@@ -11,6 +11,7 @@ import type { Intensity } from "@/generated/prisma/client";
 interface VariantRow {
   id?: string;
   volumeMl: string;
+  variantLabel: string;
   sku: string;
   price: string;
   minStockQty: string;
@@ -64,7 +65,8 @@ export function ProductForm({
     product && product.variants.length > 0
       ? product.variants.map((v) => ({
           id: v.id,
-          volumeMl: String(v.volumeMl),
+          volumeMl: v.volumeMl != null ? String(v.volumeMl) : "",
+          variantLabel: v.variantLabel ?? "",
           sku: v.sku,
           price: v.price.toString(),
           minStockQty: String(v.minStockQty),
@@ -72,7 +74,18 @@ export function ProductForm({
           weightGrams: v.weightGrams ? String(v.weightGrams) : "",
           isActive: v.isActive,
         }))
-      : [{ volumeMl: "", sku: "", price: "", minStockQty: "3", barcode: "", weightGrams: "", isActive: true }],
+      : [
+          {
+            volumeMl: "",
+            variantLabel: "",
+            sku: "",
+            price: "",
+            minStockQty: "3",
+            barcode: "",
+            weightGrams: "",
+            isActive: true,
+          },
+        ],
   );
 
   const [images, setImages] = useState<ImageRow[]>(
@@ -393,16 +406,23 @@ export function ProductForm({
         <h2 className="font-display text-lg text-fa-black">Variantes</h2>
         <p className="text-xs text-fa-black/50">
           Estoque inicial começa em 0 — ajuste a quantidade na tela de Estoque após salvar, para
-          manter o histórico de movimentações correto.
+          manter o histórico de movimentações correto. Informe o volume (ml) para perfumes, ou um
+          rótulo (tamanho, cor...) para produtos sem volume, como acessórios.
         </p>
         <div className="space-y-3">
           {variants.map((variant, index) => (
-            <div key={index} className="grid grid-cols-2 gap-2 rounded-sm border border-fa-stone/20 p-3 sm:grid-cols-6">
+            <div key={index} className="grid grid-cols-2 gap-2 rounded-sm border border-fa-stone/20 p-3 sm:grid-cols-7">
               <input
                 placeholder="Volume (ml)"
                 type="number"
                 value={variant.volumeMl}
                 onChange={(e) => updateVariant(index, { volumeMl: e.target.value })}
+                className={inputClass}
+              />
+              <input
+                placeholder="Ou rótulo (tamanho, cor...)"
+                value={variant.variantLabel}
+                onChange={(e) => updateVariant(index, { variantLabel: e.target.value })}
                 className={inputClass}
               />
               <input
@@ -448,7 +468,16 @@ export function ProductForm({
           onClick={() =>
             setVariants((rows) => [
               ...rows,
-              { volumeMl: "", sku: "", price: "", minStockQty: "3", barcode: "", weightGrams: "", isActive: true },
+              {
+                volumeMl: "",
+                variantLabel: "",
+                sku: "",
+                price: "",
+                minStockQty: "3",
+                barcode: "",
+                weightGrams: "",
+                isActive: true,
+              },
             ])
           }
           className="text-sm text-fa-gold hover:underline"
