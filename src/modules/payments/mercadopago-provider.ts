@@ -9,6 +9,12 @@ import type {
   PaymentProviderStatus,
 } from "@/modules/payments/types";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+// Reforço explícito por pagamento — a config de webhook do painel do MP (nível de aplicação)
+// às vezes não entrega notificações reais mesmo aparentando estar correta; notification_url
+// no corpo da criação do pagamento é suportado oficialmente pela API e não depende dela.
+const WEBHOOK_URL = `${SITE_URL}/api/webhooks/mercadopago`;
+
 function mapStatus(mpStatus: string | undefined): PaymentProviderStatus {
   switch (mpStatus) {
     case "approved":
@@ -48,6 +54,7 @@ export class MercadoPagoProvider implements PaymentProvider {
         payment_method_id: "pix",
         payer: { email: input.payerEmail, first_name: input.payerName },
         external_reference: input.orderNumber,
+        notification_url: WEBHOOK_URL,
       },
       requestOptions: { idempotencyKey: input.orderId },
     });
@@ -70,6 +77,7 @@ export class MercadoPagoProvider implements PaymentProvider {
         payment_method_id: input.paymentMethodId,
         payer: { email: input.payerEmail, first_name: input.payerName },
         external_reference: input.orderNumber,
+        notification_url: WEBHOOK_URL,
       },
       requestOptions: { idempotencyKey: input.orderId },
     });
