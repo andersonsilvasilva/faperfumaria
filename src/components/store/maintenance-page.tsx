@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export function MaintenancePage({ message }: { message: string }) {
   return (
@@ -21,6 +22,12 @@ export function MaintenancePage({ message }: { message: string }) {
       >
         Falar pelo WhatsApp
       </a>
+      <Link
+        href="/entrar?callbackUrl=/admin"
+        className="mt-6 text-xs text-fa-black/40 underline hover:text-fa-gold"
+      >
+        Entrar como administrador
+      </Link>
     </div>
   );
 }
