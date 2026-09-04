@@ -36,7 +36,9 @@ export function OrderDetail({
 }) {
   const latestPayment = order.payments[0];
   const isPixPending = latestPayment?.method === "PIX" && latestPayment.status === "PENDING";
-  const qrCodeText = (latestPayment?.rawPayload as { qrCodeText?: string } | null)?.qrCodeText;
+  const pixPayload = latestPayment?.rawPayload as { qrCodeText?: string; qrCodeBase64?: string } | null;
+  const qrCodeText = pixPayload?.qrCodeText;
+  const qrCodeBase64 = pixPayload?.qrCodeBase64;
 
   return (
     <Container className="max-w-3xl py-16">
@@ -76,6 +78,16 @@ export function OrderDetail({
       {isPixPending && (
         <div className="mt-8 rounded-sm border border-fa-gold/40 bg-fa-gold/10 p-6 text-center">
           <p className="font-display text-lg text-fa-black">Pague com PIX para confirmar seu pedido</p>
+          {qrCodeBase64 && (
+            // eslint-disable-next-line @next/next/no-img-element -- imagem gerada dinamicamente (data URI), sem sentido otimizar
+            <img
+              src={`data:image/png;base64,${qrCodeBase64}`}
+              alt="QR Code para pagamento PIX"
+              width={220}
+              height={220}
+              className="mx-auto mt-4 h-55 w-55 rounded-sm border border-fa-stone/20 bg-fa-white p-2"
+            />
+          )}
           {qrCodeText && (
             <p className="mx-auto mt-3 max-w-md break-all rounded-sm border border-fa-stone/20 bg-fa-white p-3 text-xs text-fa-black/70">
               {qrCodeText}

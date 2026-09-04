@@ -1,5 +1,6 @@
 import "server-only";
 import { randomUUID } from "crypto";
+import QRCode from "qrcode";
 import type {
   CreateCardPaymentInput,
   CreateCardPaymentResult,
@@ -19,10 +20,14 @@ export class MockPaymentProvider implements PaymentProvider {
 
   async createPixPayment(input: CreatePixPaymentInput): Promise<CreatePixPaymentResult> {
     const externalId = `mock_pix_${randomUUID()}`;
+    const qrCodeText = `00020126MOCKPIX-${input.orderNumber}-${input.amount.toFixed(2)}`;
+    const qrCodeBase64 = (await QRCode.toBuffer(qrCodeText, { margin: 1, width: 320 })).toString("base64");
+
     return {
       externalId,
       status: "PENDING",
-      qrCodeText: `00020126MOCKPIX-${input.orderNumber}-${input.amount.toFixed(2)}`,
+      qrCodeText,
+      qrCodeBase64,
     };
   }
 
