@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { MAINTENANCE_SETTING_KEY } from "@/modules/settings/maintenance";
+import { SITE_BACKGROUND_SETTING_KEY } from "@/modules/settings/site-background";
 import type { Prisma } from "@/generated/prisma/client";
 
 export interface SettingActionState {
@@ -73,4 +74,34 @@ export async function setMaintenanceModeAction(
   revalidatePath("/admin/configuracoes");
   revalidatePath("/", "layout");
   return { status: "success", message: enabled ? "Loja em modo de manutenção." : "Loja reaberta ao público." };
+}
+
+const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
+
+const siteBackgroundSchema = z.object({
+  colorStart: z.string().regex(HEX_COLOR_REGEX, "Cor inicial inválida."),
+  colorEnd: z.string().regex(HEX_COLOR_REGEX, "Cor final inválida."),
+});
+
+export async function setSiteBackgroundAction(
+  _prevState: SettingActionState,
+  formData: FormData,
+): Promise<SettingActionState> {
+  const admin = await requireAdmin();
+  if (!admin.ok) return { status: "error", message: admin.message };
+
+  const parsed = siteBackgroundSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) {
+    return { status: "error", message: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  await prisma.storeSetting.upsert({
+    where: { key: SITE_BACKGROUND_SETTING_KEY },
+    update: { value: parsed.data },
+    create: { key: SITE_BACKGROUND_SETTING_KEY, value: parsed.data },
+  });
+
+  revalidatePath("/admin/configuracoes");
+  revalidatePath("/", "layout");
+  return { status: "success", message: "Cor de fundo da loja atualizada." };
 }

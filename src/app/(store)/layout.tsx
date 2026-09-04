@@ -5,6 +5,7 @@ import { FavoritesProvider } from "@/components/store/favorites/favorites-provid
 import { AnalyticsScripts } from "@/components/analytics/analytics-scripts";
 import { MaintenancePage } from "@/components/store/maintenance-page";
 import { getMaintenanceMode } from "@/modules/settings/maintenance";
+import { getSiteBackground } from "@/modules/settings/site-background";
 import { auth } from "@/lib/auth";
 
 // Rotas que continuam acessíveis mesmo em manutenção — sem isso, um admin deslogado ficaria
@@ -12,30 +13,34 @@ import { auth } from "@/lib/auth";
 const MAINTENANCE_ALLOWED_PATHS = new Set(["/entrar", "/cadastro"]);
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
-  const [maintenance, session, pathname] = await Promise.all([
+  const [maintenance, session, pathname, background] = await Promise.all([
     getMaintenanceMode(),
     auth(),
     headers().then((h) => h.get("x-pathname") ?? ""),
+    getSiteBackground(),
   ]);
 
   const isAdmin = session?.user?.role === "ADMIN";
   const isBlocked = maintenance.enabled && !isAdmin && !MAINTENANCE_ALLOWED_PATHS.has(pathname);
+  const backgroundStyle = { background: `linear-gradient(180deg, ${background.colorStart}, ${background.colorEnd})` };
 
   if (isBlocked) {
     return (
-      <>
+      <div className="flex min-h-screen flex-col" style={backgroundStyle}>
         <AnalyticsScripts />
         <MaintenancePage message={maintenance.message} />
-      </>
+      </div>
     );
   }
 
   return (
-    <FavoritesProvider>
-      <AnalyticsScripts />
-      <Header />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </FavoritesProvider>
+    <div className="flex min-h-screen flex-col" style={backgroundStyle}>
+      <FavoritesProvider>
+        <AnalyticsScripts />
+        <Header />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </FavoritesProvider>
+    </div>
   );
 }

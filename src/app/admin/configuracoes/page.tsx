@@ -3,6 +3,8 @@ import { listStoreSettings } from "@/modules/admin/settings-queries";
 import { SettingForm } from "@/components/admin/settings/setting-form";
 import { MaintenanceToggleForm } from "@/components/admin/settings/maintenance-toggle-form";
 import { getMaintenanceMode } from "@/modules/settings/maintenance";
+import { SiteBackgroundForm } from "@/components/admin/settings/site-background-form";
+import { getSiteBackground } from "@/modules/settings/site-background";
 
 export const metadata: Metadata = {
   title: "Configurações | Admin",
@@ -11,7 +13,11 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
-  const [settings, maintenance] = await Promise.all([listStoreSettings(), getMaintenanceMode()]);
+  const [settings, maintenance, siteBackground] = await Promise.all([
+    listStoreSettings(),
+    getMaintenanceMode(),
+    getSiteBackground(),
+  ]);
 
   return (
     <div className="max-w-2xl">
@@ -25,6 +31,17 @@ export default async function AdminSettingsPage() {
         <h2 className="font-display text-lg text-fa-black">Modo de manutenção</h2>
         <div className="mt-3">
           <MaintenanceToggleForm maintenance={maintenance} />
+        </div>
+      </section>
+
+      <section className="mt-8 rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
+        <h2 className="font-display text-lg text-fa-black">Cor de fundo do site</h2>
+        <p className="mt-1 text-xs text-fa-black/50">
+          Degradê aplicado ao fundo da loja (não afeta o painel Admin). Deixe as duas cores iguais
+          para um fundo sólido.
+        </p>
+        <div className="mt-3">
+          <SiteBackgroundForm background={siteBackground} />
         </div>
       </section>
 
