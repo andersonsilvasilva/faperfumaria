@@ -13,6 +13,7 @@
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@auth/core": "0.41.3",
     "@hookform/resolvers": "^5.9.1",
     "@prisma/adapter-mariadb": "^7.10.0",
     "@prisma/client": "^7.10.0",
@@ -22,6 +23,7 @@
     "mercadopago": "^3.6.0",
     "next": "16.3.4",
     "next-auth": "^5.0.0-beta.32",
+    "nodemailer": "^10.0.0",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -48,6 +50,7 @@
       "mariadb": "3.5.4"
     },
     "deepmerge-ts": "8.0.2",
-    "mysql2": "3.24.3"
+    "mysql2": "3.24.3",
+    "nodemailer": "^10.0.0"
   }
 }

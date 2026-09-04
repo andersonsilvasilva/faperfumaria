@@ -43,7 +43,7 @@ documentado como tal no código, sem integração real de transportadora ainda.
 ## E-mail transacional
 
 Implementado em `src/modules/email/` (`types.ts` define a interface `EmailProvider`;
-`mock-provider.ts` e `gmail-provider.ts` são as duas implementações; `index.ts`/
+`mock-provider.ts`, `gmail-provider.ts` e `smtp-provider.ts` são as três implementações; `index.ts`/
 `getEmailProvider()` escolhe qual usar, mesmo padrão do módulo de pagamento). Templates HTML +
 texto puro em `templates.ts` para os 8 tipos exigidos pela seção 53 do `CLAUDE.md`: pedido
 recebido, pagamento aprovado, pedido em preparação/enviado/entregue, pagamento recusado,
@@ -52,9 +52,9 @@ despacha o template certo — nunca lança erro para quem chamou (falha de e-mai
 derrubar um checkout ou um webhook, só fica registrada no console).
 
 **Padrão de segurança: `EMAIL_PROVIDER=mock` sempre por padrão.** Só envia e-mails de verdade
-quando `EMAIL_PROVIDER=gmail` é definido explicitamente e as 4 variáveis abaixo estão
-preenchidas — do contrário `getEmailProvider()` lança erro na inicialização, nunca envia "quase
-certo".
+quando `EMAIL_PROVIDER=gmail` ou `EMAIL_PROVIDER=smtp` é definido explicitamente e as variáveis
+correspondentes estão preenchidas — do contrário `getEmailProvider()` lança erro na
+inicialização, nunca envia "quase certo".
 
 Disparos já ligados aos fluxos reais:
 
@@ -105,6 +105,25 @@ contrário o Gmail substitui pelo endereço real da conta autenticada.
 
 Limite de envio do Gmail API: 500 e-mails/dia em conta Gmail comum (mais alto em contas Google
 Workspace) — suficiente para o volume transacional de uma loja deste porte.
+
+### SMTP genérico — caixa de e-mail da própria hospedagem (`EMAIL_PROVIDER=smtp`)
+
+Alternativa ao Gmail para quando o envio deve sair de uma caixa de e-mail comum (usuário/senha),
+como `vendas@faperfumaria.com.br` na Hostinger. Usa a biblioteca `nodemailer` com as credenciais
+SMTP diretas — sem OAuth2, sem passo manual de autorização.
+
+Preencha em `.env`:
+
+- `EMAIL_PROVIDER="smtp"`
+- `SMTP_HOST` — ex.: `smtp.hostinger.com`.
+- `SMTP_PORT` — `465` (SSL implícito) ou `587` (STARTTLS).
+- `SMTP_SECURE` — `"true"` para porta 465, `"false"` para 587.
+- `SMTP_USER` — endereço completo da caixa (ex.: `vendas@faperfumaria.com.br`).
+- `SMTP_PASSWORD` — senha da caixa de e-mail (a mesma usada no webmail/IMAP, não uma senha de
+  app separada — hospedagens de e-mail comuns não têm esse conceito).
+- `EMAIL_FROM` — ex.: `"FA Perfumaria <vendas@faperfumaria.com.br>"`. Diferente do Gmail, a
+  maioria dos provedores SMTP de hospedagem exige que `EMAIL_FROM` seja exatamente o mesmo
+  endereço autenticado em `SMTP_USER` (senão a mensagem pode ser rejeitada ou marcada como spam).
 
 ## Analytics
 

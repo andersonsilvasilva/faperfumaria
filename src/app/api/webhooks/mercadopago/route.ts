@@ -37,14 +37,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "data.id ausente" }, { status: 400 });
   }
 
-  const provider = getPaymentProvider();
-  const status = await provider.getPaymentStatus(dataId);
-
   const payment = await prisma.payment.findFirst({ where: { externalId: dataId } });
   if (!payment) {
-    // Notificação para um pagamento que não reconhecemos — responde 200 para o MP não reenviar.
+    // Notificação para um pagamento que não reconhecemos (inclui os testes de "Simular
+    // notificações" do painel do MP, que usam um id fictício) — responde 200 sem consultar a
+    // API do MP, para não reenviar nem lançar erro por um id que nunca vai existir lá.
     return NextResponse.json({ received: true });
   }
+
+  const provider = getPaymentProvider();
+  const status = await provider.getPaymentStatus(dataId);
 
   const mappedStatus =
     status === "APPROVED" ? "APPROVED" : status === "REJECTED" ? "REJECTED" : status === "REFUNDED" ? "REFUNDED" : status === "CANCELLED" ? "CANCELLED" : "PENDING";
