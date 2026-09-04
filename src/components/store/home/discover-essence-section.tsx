@@ -8,10 +8,10 @@ export function DiscoverEssenceSection() {
   return (
     <section className="bg-fa-off-white py-20">
       <Container className="grid items-center gap-12 md:grid-cols-2">
-        <div className="relative order-2 aspect-4/5 w-full overflow-hidden rounded-sm shadow-[0_30px_60px_-25px_rgba(11,11,11,0.4)] md:order-1">
+        <div className="relative order-2 aspect-square w-full overflow-hidden rounded-sm shadow-[0_30px_60px_-25px_rgba(11,11,11,0.4)] md:order-1">
           <Image
-            src="/brand/store-perfumes.jpg"
-            alt="Estante de perfumes selecionados da FA Perfumaria"
+            src="/brand/quiz-essencia.png"
+            alt="Encontre sua essência — qual perfume combina com você?"
             fill
             className="object-cover"
             sizes="(min-width: 768px) 50vw, 100vw"
