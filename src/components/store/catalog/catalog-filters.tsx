@@ -6,6 +6,7 @@ import {
   getOlfactoryFamilies,
 } from "@/modules/catalog/queries";
 import { PRICE_RANGES, type RawSearchParams } from "@/modules/catalog/params";
+import { AutoSubmitFilters } from "@/components/store/catalog/auto-submit-filters";
 
 const INTENSITY_OPTIONS = [
   { value: "SUAVE", label: "Suave" },
@@ -55,7 +56,7 @@ export async function CatalogFilters({ searchParams }: { searchParams: RawSearch
     Boolean(currentSearch);
 
   return (
-    <form method="GET" className="space-y-8">
+    <AutoSubmitFilters>
       {currentSearch && <input type="hidden" name="q" value={currentSearch} />}
 
       {hasActiveFilters && (
@@ -197,13 +198,6 @@ export async function CatalogFilters({ searchParams }: { searchParams: RawSearch
           ))}
         </div>
       </fieldset>
-
-      <button
-        type="submit"
-        className="w-full bg-fa-black py-2.5 text-xs font-medium uppercase tracking-wide text-fa-white hover:bg-fa-gold hover:text-fa-black"
-      >
-        Aplicar filtros
-      </button>
-    </form>
+    </AutoSubmitFilters>
   );
 }

@@ -7,7 +7,7 @@ export async function HeroSection() {
   const banner = await getActiveHeroBanner();
 
   return (
-    <section className="relative overflow-hidden pt-8 pb-16 md:py-24">
+    <section className="relative overflow-hidden pt-6 pb-16 md:pt-10 md:pb-24">
       <Container className="grid items-center gap-12 md:grid-cols-2">
         <div>
           <p className="text-xs font-semibold tracking-[0.2em] text-fa-gold uppercase">
