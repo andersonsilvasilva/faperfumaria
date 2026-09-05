@@ -9,6 +9,12 @@ function startOfDay(date: Date): Date {
   return copy;
 }
 
+export interface SalesPoint {
+  date: string;
+  total: number;
+  count: number;
+}
+
 export interface DashboardMetrics {
   todayOrderCount: number;
   todayRevenue: number;
@@ -19,7 +25,36 @@ export interface DashboardMetrics {
   newCustomersInPeriod: number;
   lowStockCount: number;
   topProducts: { name: string; quantity: number }[];
-  salesByDay: { date: string; total: number; count: number }[];
+  salesSeries: {
+    currentMonth: SalesPoint[];
+    last6Months: SalesPoint[];
+    last12Months: SalesPoint[];
+  };
+}
+
+/** Agrupa pedidos pagos em baldes (dia ou mês), preenchendo os baldes vazios com zero pra
+ * manter o eixo do tempo contínuo mesmo sem vendas naquele dia/mês. */
+function bucketOrders(
+  orders: { total: import("@/generated/prisma/client").Prisma.Decimal; paidAt: Date | null }[],
+  bucketDates: Date[],
+  granularity: "day" | "month",
+): SalesPoint[] {
+  const keyOf = (d: Date) => (granularity === "day" ? d.toISOString().slice(0, 10) : d.toISOString().slice(0, 7));
+
+  const map = new Map<string, SalesPoint>();
+  for (const d of bucketDates) {
+    const key = keyOf(d);
+    map.set(key, { date: key, total: 0, count: 0 });
+  }
+  for (const order of orders) {
+    if (!order.paidAt) continue;
+    const key = keyOf(order.paidAt);
+    const entry = map.get(key);
+    if (!entry) continue;
+    entry.total += Number(order.total.toString());
+    entry.count += 1;
+  }
+  return Array.from(map.values());
 }
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
@@ -27,7 +62,11 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const periodStart = new Date(todayStart);
   periodStart.setDate(periodStart.getDate() - 29);
 
-  const [todayAgg, periodOrders, newCustomersInPeriod, variants, topProductsRaw] = await Promise.all([
+  const currentMonthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1);
+  const sixMonthsStart = new Date(todayStart.getFullYear(), todayStart.getMonth() - 5, 1);
+  const twelveMonthsStart = new Date(todayStart.getFullYear(), todayStart.getMonth() - 11, 1);
+
+  const [todayAgg, periodOrders, yearOrders, newCustomersInPeriod, variants, topProductsRaw] = await Promise.all([
     prisma.order.aggregate({
       where: { status: { in: [...PAID_STATUSES] }, paidAt: { gte: todayStart } },
       _count: true,
@@ -35,6 +74,10 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     }),
     prisma.order.findMany({
       where: { status: { in: [...PAID_STATUSES] }, paidAt: { gte: periodStart } },
+      select: { total: true, paidAt: true },
+    }),
+    prisma.order.findMany({
+      where: { status: { in: [...PAID_STATUSES] }, paidAt: { gte: twelveMonthsStart } },
       select: { total: true, paidAt: true },
     }),
     prisma.user.count({ where: { role: "CUSTOMER", createdAt: { gte: periodStart } } }),
@@ -54,20 +97,27 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const periodRevenue = periodOrders.reduce((sum, o) => sum + Number(o.total.toString()), 0);
   const periodOrderCount = periodOrders.length;
 
-  const salesByDayMap = new Map<string, { total: number; count: number }>();
-  for (let i = 0; i < 30; i++) {
-    const day = new Date(periodStart);
-    day.setDate(day.getDate() + i);
-    salesByDayMap.set(day.toISOString().slice(0, 10), { total: 0, count: 0 });
+  const daysInCurrentMonth: Date[] = [];
+  for (let d = new Date(currentMonthStart); d <= todayStart; d.setDate(d.getDate() + 1)) {
+    daysInCurrentMonth.push(new Date(d));
   }
-  for (const order of periodOrders) {
-    if (!order.paidAt) continue;
-    const key = order.paidAt.toISOString().slice(0, 10);
-    const entry = salesByDayMap.get(key) ?? { total: 0, count: 0 };
-    entry.total += Number(order.total.toString());
-    entry.count += 1;
-    salesByDayMap.set(key, entry);
-  }
+
+  const monthsSince = (start: Date, count: number) =>
+    Array.from({ length: count }, (_, i) => new Date(start.getFullYear(), start.getMonth() + i, 1));
+
+  const salesSeries = {
+    currentMonth: bucketOrders(
+      yearOrders.filter((o) => o.paidAt && o.paidAt >= currentMonthStart),
+      daysInCurrentMonth,
+      "day",
+    ),
+    last6Months: bucketOrders(
+      yearOrders.filter((o) => o.paidAt && o.paidAt >= sixMonthsStart),
+      monthsSince(sixMonthsStart, 6),
+      "month",
+    ),
+    last12Months: bucketOrders(yearOrders, monthsSince(twelveMonthsStart, 12), "month"),
+  };
 
   const variantIds = topProductsRaw.map((row) => row.variantId);
   const variantDetails = await prisma.productVariant.findMany({
@@ -89,10 +139,6 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       name: variantNameById.get(row.variantId) ?? "Produto removido",
       quantity: row._sum.quantity ?? 0,
     })),
-    salesByDay: Array.from(salesByDayMap.entries()).map(([date, { total, count }]) => ({
-      date,
-      total,
-      count,
-    })),
+    salesSeries,
   };
 }

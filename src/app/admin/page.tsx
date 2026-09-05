@@ -35,27 +35,30 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)] lg:col-span-2">
-          <h2 className="font-display text-lg text-fa-black">Faturamento e vendas — últimos 30 dias</h2>
-          <div className="mt-4">
-            <SalesLineChart
-              series={[
-                {
-                  label: "Faturamento",
-                  color: "#c99724",
-                  format: (v) => formatPrice(v),
-                  data: metrics.salesByDay.map((d) => ({ date: d.date, value: d.total })),
-                },
-                {
-                  label: "Pedidos",
-                  color: "#0b0b0b",
-                  format: (v) => `${v}x`,
-                  data: metrics.salesByDay.map((d) => ({ date: d.date, value: d.count })),
-                },
-              ]}
-            />
-          </div>
-        </section>
+        <div className="lg:col-span-2">
+          <SalesLineChart
+            periods={[
+              {
+                key: "mes-atual",
+                label: "Mês atual",
+                data: metrics.salesSeries.currentMonth,
+                dateFormat: { day: "2-digit", month: "2-digit" },
+              },
+              {
+                key: "6-meses",
+                label: "6 meses",
+                data: metrics.salesSeries.last6Months,
+                dateFormat: { month: "short", year: "2-digit" },
+              },
+              {
+                key: "1-ano",
+                label: "1 ano",
+                data: metrics.salesSeries.last12Months,
+                dateFormat: { month: "short", year: "2-digit" },
+              },
+            ]}
+          />
+        </div>
 
         <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
           <h2 className="font-display text-lg text-fa-black">Mais vendidos (30 dias)</h2>
