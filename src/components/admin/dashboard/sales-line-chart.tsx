@@ -65,10 +65,10 @@ export function SalesLineChart({ periods }: { periods: Period[] }) {
       : [0, Math.floor((active.data.length - 1) / 2), active.data.length - 1];
 
   return (
-    <div className="rounded-sm bg-fa-black p-6">
+    <div className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-lg text-fa-white">Faturamento e vendas</h2>
-        <div className="flex gap-1 rounded-sm bg-fa-white/10 p-1">
+        <h2 className="font-display text-lg text-fa-black">Faturamento e vendas</h2>
+        <div className="flex gap-1 rounded-sm bg-fa-off-white p-1">
           {periods.map((period) => (
             <button
               key={period.key}
@@ -77,7 +77,7 @@ export function SalesLineChart({ periods }: { periods: Period[] }) {
               className={`rounded-sm px-3 py-1.5 text-xs font-medium uppercase tracking-wide transition-colors ${
                 period.key === active.key
                   ? "bg-fa-gold text-fa-black"
-                  : "text-fa-white/60 hover:text-fa-white"
+                  : "text-fa-black/50 hover:text-fa-black"
               }`}
             >
               {period.label}
@@ -90,14 +90,14 @@ export function SalesLineChart({ periods }: { periods: Period[] }) {
         <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" className="h-48 w-full overflow-visible">
           {Array.from({ length: GRID_LINES + 1 }, (_, i) => {
             const y = PADDING + (i * (HEIGHT - PADDING * 2)) / GRID_LINES;
-            return <line key={i} x1={PADDING} x2={WIDTH - PADDING} y1={y} y2={y} stroke="#ffffff" strokeOpacity="0.08" />;
+            return <line key={i} x1={PADDING} x2={WIDTH - PADDING} y1={y} y2={y} stroke="#0b0b0b" strokeOpacity="0.08" />;
           })}
 
-          <path d={smoothPath(revenueCoords)} fill="none" stroke="#ddb95e" strokeWidth="2.5" />
-          <path d={smoothPath(countCoords)} fill="none" stroke="#f7f5f2" strokeWidth="2" strokeOpacity="0.6" />
+          <path d={smoothPath(revenueCoords)} fill="none" stroke="#c99724" strokeWidth="2.5" />
+          <path d={smoothPath(countCoords)} fill="none" stroke="#0b0b0b" strokeWidth="2" strokeOpacity="0.4" />
 
           {revenueCoords.map((p, i) => (
-            <circle key={`r-${active.data[i].date}`} cx={p.x} cy={p.y} r="3" fill="#ddb95e">
+            <circle key={`r-${active.data[i].date}`} cx={p.x} cy={p.y} r="3" fill="#c99724">
               <title>
                 {tooltipFormatter.format(parsePointDate(active.data[i].date))} — Faturamento:{" "}
                 {formatPrice(active.data[i].total)}
@@ -105,7 +105,7 @@ export function SalesLineChart({ periods }: { periods: Period[] }) {
             </circle>
           ))}
           {countCoords.map((p, i) => (
-            <circle key={`c-${active.data[i].date}`} cx={p.x} cy={p.y} r="2.5" fill="#f7f5f2">
+            <circle key={`c-${active.data[i].date}`} cx={p.x} cy={p.y} r="2.5" fill="#0b0b0b" fillOpacity="0.6">
               <title>
                 {tooltipFormatter.format(parsePointDate(active.data[i].date))} — Pedidos: {active.data[i].count}
               </title>
@@ -113,20 +113,20 @@ export function SalesLineChart({ periods }: { periods: Period[] }) {
           ))}
         </svg>
 
-        <div className="mt-2 flex justify-between text-[10px] uppercase tracking-wide text-fa-white/40">
+        <div className="mt-2 flex justify-between text-[10px] uppercase tracking-wide text-fa-black/40">
           {labelIndexes.map((i) => (
             <span key={active.data[i].date}>{labelFormatter.format(parsePointDate(active.data[i].date))}</span>
           ))}
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-4 text-xs text-fa-white/60">
+      <div className="mt-4 flex flex-wrap gap-4 text-xs text-fa-black/60">
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-fa-gold-light" />
+          <span className="h-2 w-2 rounded-full bg-fa-gold" />
           Faturamento — {formatPrice(active.data.reduce((sum, d) => sum + d.total, 0))}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-fa-off-white" />
+          <span className="h-2 w-2 rounded-full bg-fa-black/60" />
           Pedidos — {active.data.reduce((sum, d) => sum + d.count, 0)}x
         </span>
       </div>
