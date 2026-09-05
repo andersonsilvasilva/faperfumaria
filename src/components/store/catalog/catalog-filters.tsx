@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   getBrandsWithActiveProducts,
   getCatalogCategories,
@@ -44,9 +45,27 @@ export async function CatalogFilters({ searchParams }: { searchParams: RawSearch
   const currentSort = toArray(searchParams.sort)[0] ?? "relevancia";
   const currentSearch = toArray(searchParams.q)[0];
 
+  const hasActiveFilters =
+    selectedCategories.length > 0 ||
+    selectedBrands.length > 0 ||
+    selectedFamilies.length > 0 ||
+    selectedOccasions.length > 0 ||
+    selectedIntensities.length > 0 ||
+    Boolean(selectedPrice) ||
+    Boolean(currentSearch);
+
   return (
     <form method="GET" className="space-y-8">
       {currentSearch && <input type="hidden" name="q" value={currentSearch} />}
+
+      {hasActiveFilters && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-fa-black/60">Filtros</p>
+          <Link href="?" className="text-xs font-medium text-fa-gold underline hover:text-fa-black">
+            Limpar filtros
+          </Link>
+        </div>
+      )}
 
       <div>
         <label htmlFor="sort" className="block text-xs font-semibold uppercase tracking-wide text-fa-black/60">

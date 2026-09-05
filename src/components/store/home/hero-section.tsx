@@ -44,7 +44,7 @@ export async function HeroSection() {
           {/* brilho dourado suave atrás da imagem */}
           <div aria-hidden className="absolute -inset-8 -z-10 rounded-full bg-fa-gold/25 blur-3xl" />
 
-          <div className="relative aspect-4/5 w-full overflow-hidden rounded-sm shadow-[0_40px_70px_-20px_rgba(11,11,11,0.45)] ring-1 ring-fa-gold/20">
+          <div className="relative aspect-4/5 w-full overflow-hidden rounded-sm bg-fa-off-white shadow-[0_40px_70px_-20px_rgba(11,11,11,0.45)] ring-1 ring-fa-gold/20">
             <Image
               src={banner ? banner.desktopImage : "/brand/hero-destaque.png"}
               alt={banner?.title ?? "Perfume em destaque sobre mármore, com estante de fragrâncias ao fundo"}
@@ -65,8 +65,12 @@ export async function HeroSection() {
                 sizes="100vw"
               />
             )}
-            {/* sombreamento sutil para dar profundidade sem competir com o produto */}
-            <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-fa-black/30 via-transparent to-fa-black/10" />
+            {/* sombreamento sutil pra dar profundidade em fotografias — só no fallback padrão.
+                Banners cadastrados pelo Admin podem ser artes com fundo transparente (ex.: um
+                logo), e esse gradiente escureceria visivelmente a margem transparente. */}
+            {!banner && (
+              <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-fa-black/30 via-transparent to-fa-black/10" />
+            )}
             <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-fa-white/10" />
           </div>
 
