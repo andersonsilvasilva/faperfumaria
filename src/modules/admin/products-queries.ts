@@ -47,6 +47,56 @@ export async function getProductForAdmin(id: string) {
   return prisma.product.findUnique({ where: { id }, include: adminProductDetailInclude });
 }
 
+export interface ProductsReportFilters {
+  categoryId?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+export async function getProductsReport(filters: ProductsReportFilters) {
+  const where: Prisma.ProductWhereInput = {
+    ...(filters.categoryId ? { categories: { some: { categoryId: filters.categoryId } } } : {}),
+    ...(filters.dateFrom || filters.dateTo
+      ? {
+          createdAt: {
+            ...(filters.dateFrom ? { gte: filters.dateFrom } : {}),
+            ...(filters.dateTo ? { lte: filters.dateTo } : {}),
+          },
+        }
+      : {}),
+  };
+
+  const products = await prisma.product.findMany({
+    where,
+    include: {
+      brand: { select: { name: true } },
+      categories: { include: { category: { select: { name: true } } } },
+      variants: { select: { barcode: true }, orderBy: { createdAt: "asc" } },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  return products.map((product) => {
+    const costPrice = Number(product.costPrice.toString());
+    const price = Number(product.price.toString());
+    const marginValue = price - costPrice;
+    const marginPercent = price > 0 ? (marginValue / price) * 100 : 0;
+
+    return {
+      id: product.id,
+      name: product.name,
+      brandName: product.brand.name,
+      categoryNames: product.categories.map((c) => c.category.name),
+      barcodes: product.variants.map((v) => v.barcode).filter((b): b is string => Boolean(b)),
+      costPrice,
+      price,
+      marginValue,
+      marginPercent,
+      createdAt: product.createdAt,
+    };
+  });
+}
+
 export async function getProductFormOptions() {
   const [brands, categories, olfactoryFamilies, profileTags] = await Promise.all([
     prisma.brand.findMany({ orderBy: { name: "asc" } }),

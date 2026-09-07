@@ -26,9 +26,14 @@ export default async function AdminProductsPage({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-fa-black">Produtos</h1>
-        <ButtonLink href="/admin/produtos/novo" className="px-4 py-2 text-xs">
-          Novo produto
-        </ButtonLink>
+        <div className="flex gap-3">
+          <ButtonLink href="/admin/produtos/relatorio" variant="secondary" className="px-4 py-2 text-xs">
+            Relatório
+          </ButtonLink>
+          <ButtonLink href="/admin/produtos/novo" className="px-4 py-2 text-xs">
+            Novo produto
+          </ButtonLink>
+        </div>
       </div>
       <p className="mt-1 text-sm text-fa-black/60">{total} produto(s)</p>
 
