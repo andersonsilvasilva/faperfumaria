@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getProductsReport } from "@/modules/admin/products-queries";
 import { formatPrice } from "@/lib/format";
+import { PrintButton } from "@/components/admin/print-button";
 
 export const metadata: Metadata = {
   title: "Relatório de produtos | Admin",
@@ -47,17 +48,24 @@ export default async function ProductsReportPage({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl text-fa-black">Relatório de produtos</h1>
-          <p className="mt-1 text-sm text-fa-black/60">{rows.length} produto(s) no filtro atual</p>
+          <p className="mt-1 text-sm text-fa-black/60 print:hidden">{rows.length} produto(s) no filtro atual</p>
+          <p className="mt-1 hidden text-sm text-fa-black/60 print:block">
+            {rows.length} produto(s) — gerado em{" "}
+            {new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeStyle: "short" }).format(new Date())}
+          </p>
         </div>
-        <Link
-          href="/admin/produtos"
-          className="text-xs font-medium uppercase tracking-wide text-fa-black/60 hover:text-fa-gold"
-        >
-          ← Voltar para produtos
-        </Link>
+        <div className="flex items-center gap-4 print:hidden">
+          <PrintButton />
+          <Link
+            href="/admin/produtos"
+            className="text-xs font-medium uppercase tracking-wide text-fa-black/60 hover:text-fa-gold"
+          >
+            ← Voltar para produtos
+          </Link>
+        </div>
       </div>
 
-      <form className="mt-6 flex flex-wrap items-end gap-4" action="/admin/produtos/relatorio">
+      <form className="mt-6 flex flex-wrap items-end gap-4 print:hidden" action="/admin/produtos/relatorio">
         <div>
           <label htmlFor="categoria" className="block text-xs font-medium text-fa-black/70">
             Categoria
@@ -137,8 +145,8 @@ export default async function ProductsReportPage({
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-sm border border-fa-stone/15 bg-fa-white shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
-        <table className="w-full min-w-[960px] text-left text-sm">
+      <div className="mt-6 overflow-x-auto rounded-sm border border-fa-stone/15 bg-fa-white shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)] print:border-none print:shadow-none">
+        <table className="w-full min-w-[960px] text-left text-sm print:min-w-0 print:text-xs">
           <thead className="border-b border-fa-stone/15 text-xs uppercase tracking-wide text-fa-black/50">
             <tr>
               <th className="px-4 py-3">Produto</th>
