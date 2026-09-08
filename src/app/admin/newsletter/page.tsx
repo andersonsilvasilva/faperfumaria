@@ -19,8 +19,16 @@ export default async function AdminNewsletterPage({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-2xl text-fa-black">Newsletter</h1>
-        <p className="text-sm text-fa-black/60">{subscribers.length} inscrito(s)</p>
+        <div>
+          <h1 className="font-display text-2xl text-fa-black">Newsletter</h1>
+          <p className="text-sm text-fa-black/60">{subscribers.length} inscrito(s)</p>
+        </div>
+        <a
+          href="/api/admin/newsletter/export"
+          className="rounded-sm border border-fa-black px-4 py-2 text-xs font-medium uppercase tracking-wide text-fa-black hover:bg-fa-black hover:text-fa-white"
+        >
+          Exportar e-mails (CSV)
+        </a>
       </div>
 
       <form className="mt-6" action="/admin/newsletter">

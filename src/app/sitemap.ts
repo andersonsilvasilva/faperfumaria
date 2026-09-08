@@ -16,6 +16,7 @@ const STATIC_ROUTES = [
   "/arabes",
   "/decants",
   "/kits",
+  "/acessorios",
   "/ofertas",
   "/descubra-sua-essencia",
   "/sobre",
