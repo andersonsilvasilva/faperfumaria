@@ -13,6 +13,8 @@ const links = [
   { label: "Cupons", href: "/admin/cupons" },
   { label: "Banners", href: "/admin/banners" },
   { label: "Newsletter", href: "/admin/newsletter" },
+  { label: "Administradores", href: "/admin/administradores" },
+  { label: "Auditoria", href: "/admin/auditoria" },
   { label: "Configurações", href: "/admin/configuracoes" },
 ];
 
