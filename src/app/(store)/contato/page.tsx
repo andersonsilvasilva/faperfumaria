@@ -51,7 +51,7 @@ export default function ContatoPage() {
           <ul className="mt-2 space-y-1">
             <li>
               <a
-                href="https://www.instagram.com/elielaraujooficial/"
+                href="https://www.instagram.com/perfumefa11bombinhas/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-fa-black hover:text-fa-gold"

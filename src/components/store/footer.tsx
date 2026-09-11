@@ -36,7 +36,7 @@ const columns = [
 ];
 
 const socialLinks = [
-  { label: "Instagram", href: "https://www.instagram.com/elielaraujooficial/" },
+  { label: "Instagram", href: "https://www.instagram.com/perfumefa11bombinhas/" },
   { label: "Facebook", href: "https://www.facebook.com/eliel.araujo.505569" },
   { label: "Threads", href: "https://www.threads.com/@elielaraujooficial" },
 ];

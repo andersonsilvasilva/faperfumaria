@@ -10,8 +10,8 @@ export function InstagramSection() {
           Novidades, fragrâncias, sugestões e escolhas especiais para quem é apaixonado pelo
           universo da perfumaria.
         </p>
-        <p className="mt-2 font-display text-lg text-fa-gold">@elielaraujooficial</p>
-        <ButtonLink href="https://www.instagram.com/elielaraujooficial/" variant="secondary" className="mt-6">
+        <p className="mt-2 font-display text-lg text-fa-gold">@perfumefa11bombinhas</p>
+        <ButtonLink href="https://www.instagram.com/perfumefa11bombinhas/" variant="secondary" className="mt-6">
           Seguir no Instagram
         </ButtonLink>
       </Container>

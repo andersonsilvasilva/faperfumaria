@@ -72,7 +72,7 @@ const organizationJsonLd = {
     addressCountry: "BR",
   },
   sameAs: [
-    "https://www.instagram.com/elielaraujooficial/",
+    "https://www.instagram.com/perfumefa11bombinhas/",
     "https://www.facebook.com/eliel.araujo.505569",
     "https://www.threads.com/@elielaraujooficial",
   ],
