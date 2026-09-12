@@ -79,7 +79,7 @@ function buildWhere(params: ProductListParams): Prisma.ProductWhereInput {
     where.brand = { slug: { in: params.brandSlugs } };
   }
   if (params.olfactoryFamilySlugs?.length) {
-    where.olfactoryFamily = { slug: { in: params.olfactoryFamilySlugs } };
+    where.olfactoryFamilies = { some: { family: { slug: { in: params.olfactoryFamilySlugs } } } };
   }
   if (params.tagSlugs?.length) {
     where.profileTags = { some: { tag: { slug: { in: params.tagSlugs } } } };
@@ -102,7 +102,7 @@ function buildWhere(params: ProductListParams): Prisma.ProductWhereInput {
       { name: { contains: q } },
       { shortDescription: { contains: q } },
       { brand: { name: { contains: q } } },
-      { olfactoryFamily: { name: { contains: q } } },
+      { olfactoryFamilies: { some: { family: { name: { contains: q } } } } },
       { categories: { some: { category: { name: { contains: q } } } } },
       { profileTags: { some: { tag: { name: { contains: q } } } } },
       { fragranceNotes: { some: { note: { name: { contains: q } } } } },
@@ -193,7 +193,7 @@ const productDetailInclude = {
     orderBy: [{ volumeMl: "asc" as const }, { createdAt: "asc" as const }],
   },
   categories: { include: { category: true } },
-  olfactoryFamily: true,
+  olfactoryFamilies: { include: { family: true } },
   fragranceNotes: { include: { note: true } },
   profileTags: { include: { tag: true } },
 } satisfies Prisma.ProductInclude;
@@ -208,13 +208,15 @@ export async function getProductBySlug(slug: string) {
 }
 
 export async function getRelatedProducts(product: ProductDetailData, limit = 4) {
+  const familyIds = product.olfactoryFamilies.map((f) => f.familyId);
+
   return prisma.product.findMany({
     where: {
       isActive: true,
       id: { not: product.id },
       OR: [
         { brandId: product.brandId },
-        { olfactoryFamilyId: product.olfactoryFamilyId },
+        ...(familyIds.length ? [{ olfactoryFamilies: { some: { familyId: { in: familyIds } } } }] : []),
         { categories: { some: { categoryId: { in: product.categories.map((c) => c.categoryId) } } } },
       ],
     },

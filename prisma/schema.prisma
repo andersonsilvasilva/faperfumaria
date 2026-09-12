@@ -112,7 +112,7 @@ model OlfactoryFamily {
   name String
   slug String @unique
 
-  products Product[]
+  products ProductOlfactoryFamily[]
 }
 
 enum FragranceLayer {
@@ -186,11 +186,10 @@ model Product {
   // Opcional — se não informado, a loja usa o padrão de 3x sem juros (ver formatInstallments).
   maxInstallments Int?
 
-  olfactoryFamilyId String?
-  intensity         Intensity?
-  fixation          String?
-  projection        String?
-  concentration     String?
+  intensity     Intensity?
+  fixation      String?
+  projection    String?
+  concentration String?
 
   isActive   Boolean @default(true)
   isFeatured Boolean @default(false)
@@ -202,19 +201,18 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  brand           Brand                @relation(fields: [brandId], references: [id])
-  olfactoryFamily OlfactoryFamily?     @relation(fields: [olfactoryFamilyId], references: [id])
-  categories      ProductCategory[]
-  variants        ProductVariant[]
-  images          ProductImage[]
-  fragranceNotes  ProductFragranceNote[]
-  profileTags     ProductProfileTag[]
-  favorites       Favorite[]
-  reviews         Review[]
-  couponProducts  CouponProduct[]
+  brand             Brand                    @relation(fields: [brandId], references: [id])
+  olfactoryFamilies ProductOlfactoryFamily[]
+  categories        ProductCategory[]
+  variants          ProductVariant[]
+  images            ProductImage[]
+  fragranceNotes    ProductFragranceNote[]
+  profileTags       ProductProfileTag[]
+  favorites         Favorite[]
+  reviews           Review[]
+  couponProducts    CouponProduct[]
 
   @@index([brandId])
-  @@index([olfactoryFamilyId])
   @@index([isActive, isFeatured])
 }
 
@@ -227,6 +225,17 @@ model ProductCategory {
 
   @@id([productId, categoryId])
   @@index([categoryId])
+}
+
+model ProductOlfactoryFamily {
+  productId String
+  familyId  String
+
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  family  OlfactoryFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@id([productId, familyId])
+  @@index([familyId])
 }
 
 model ProductVariant {

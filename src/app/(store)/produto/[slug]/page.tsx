@@ -131,7 +131,11 @@ export default async function ProdutoPage({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="dark">{product.brand.name}</Badge>
-            {product.olfactoryFamily && <Badge variant="outline">{product.olfactoryFamily.name}</Badge>}
+            {product.olfactoryFamilies.map((f) => (
+              <Badge key={f.familyId} variant="outline">
+                {f.family.name}
+              </Badge>
+            ))}
             {product.intensity && <Badge variant="outline">{INTENSITY_LABELS[product.intensity]}</Badge>}
             {discountPercent !== null && discountPercent > 0 && (
               <Badge variant="gold">-{discountPercent}% OFF</Badge>
@@ -212,7 +216,7 @@ export default async function ProdutoPage({
           </section>
         )}
 
-        {(product.olfactoryFamily ||
+        {(product.olfactoryFamilies.length > 0 ||
           product.intensity ||
           product.concentration ||
           product.fixation ||
@@ -220,11 +224,15 @@ export default async function ProdutoPage({
         <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
           <h2 className="font-display text-2xl text-fa-black">Informações técnicas</h2>
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-4">
-            {product.olfactoryFamily && (
+            {product.olfactoryFamilies.length > 0 && (
               <div>
                 <dt className="text-xs uppercase tracking-wide text-fa-black/50">Família olfativa</dt>
-                <dd className="mt-1.5">
-                  <Badge variant="outline">{product.olfactoryFamily.name}</Badge>
+                <dd className="mt-1.5 flex flex-wrap gap-1.5">
+                  {product.olfactoryFamilies.map((f) => (
+                    <Badge key={f.familyId} variant="outline">
+                      {f.family.name}
+                    </Badge>
+                  ))}
                 </dd>
               </div>
             )}

@@ -465,7 +465,6 @@ async function seedCatalog() {
       update: {
         name: product.name,
         brandId,
-        olfactoryFamilyId,
         intensity: product.intensity,
         concentration: product.concentration,
         fixation: product.fixation,
@@ -481,7 +480,6 @@ async function seedCatalog() {
         name: product.name,
         slug: product.slug,
         brandId,
-        olfactoryFamilyId,
         intensity: product.intensity,
         concentration: product.concentration,
         fixation: product.fixation,
@@ -501,6 +499,11 @@ async function seedCatalog() {
         productId: record.id,
         categoryId: categoryBySlug.get(slug)!,
       })),
+    });
+
+    await prisma.productOlfactoryFamily.deleteMany({ where: { productId: record.id } });
+    await prisma.productOlfactoryFamily.create({
+      data: { productId: record.id, familyId: olfactoryFamilyId },
     });
 
     // upsert por SKU (não deleta/recria): variantes já podem estar referenciadas por pedidos

@@ -85,7 +85,7 @@ const productSchema = z.object({
       "Parcelamento deve ser um número inteiro entre 1 e 24.",
     ),
 
-  olfactoryFamilyId: z.string().optional().default(""),
+  olfactoryFamilyIds: z.array(z.string()).default([]),
   intensity: z.enum(INTENSITY_ORDER as [string, ...string[]]).optional().or(z.literal("")),
   fixation: z.string().trim().optional().default(""),
   projection: z.string().trim().optional().default(""),
@@ -123,6 +123,7 @@ function parseProductFormData(formData: FormData) {
     ...Object.fromEntries(formData.entries()),
     categoryIds: formData.getAll("categoryIds"),
     profileTagIds: formData.getAll("profileTagIds"),
+    olfactoryFamilyIds: formData.getAll("olfactoryFamilyIds"),
   };
   return productSchema.safeParse(raw);
 }
@@ -192,7 +193,6 @@ export async function createProductAction(
           promotionStart: data.promotionStart ?? null,
           promotionEnd: data.promotionEnd ?? null,
           maxInstallments: data.maxInstallments ?? null,
-          olfactoryFamilyId: data.olfactoryFamilyId || null,
           intensity: (data.intensity as (typeof INTENSITY_ORDER)[number]) || null,
           fixation: data.fixation || null,
           projection: data.projection || null,
@@ -202,6 +202,7 @@ export async function createProductAction(
           canonicalUrl: data.canonicalUrl || null,
           categories: { create: data.categoryIds.map((categoryId) => ({ categoryId })) },
           profileTags: { create: data.profileTagIds.map((tagId) => ({ tagId })) },
+          olfactoryFamilies: { create: data.olfactoryFamilyIds.map((familyId) => ({ familyId })) },
           variants: {
             create: variantsResult.data.map((v) => ({
               volumeMl: v.volumeMl ?? null,
@@ -295,7 +296,6 @@ export async function updateProductAction(
           promotionStart: data.promotionStart ?? null,
           promotionEnd: data.promotionEnd ?? null,
           maxInstallments: data.maxInstallments ?? null,
-          olfactoryFamilyId: data.olfactoryFamilyId || null,
           intensity: (data.intensity as (typeof INTENSITY_ORDER)[number]) || null,
           fixation: data.fixation || null,
           projection: data.projection || null,
@@ -314,6 +314,11 @@ export async function updateProductAction(
       await tx.productProfileTag.deleteMany({ where: { productId } });
       await tx.productProfileTag.createMany({
         data: data.profileTagIds.map((tagId) => ({ productId, tagId })),
+      });
+
+      await tx.productOlfactoryFamily.deleteMany({ where: { productId } });
+      await tx.productOlfactoryFamily.createMany({
+        data: data.olfactoryFamilyIds.map((familyId) => ({ productId, familyId })),
       });
 
       await syncFragranceNotes(tx, productId, "TOP", data.topNotes);

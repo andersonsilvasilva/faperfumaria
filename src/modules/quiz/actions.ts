@@ -35,7 +35,7 @@ export async function getEssenceRecommendations(rawAnswers: QuizAnswers): Promis
     include: {
       brand: true,
       images: { where: { isMain: true }, take: 1 },
-      olfactoryFamily: true,
+      olfactoryFamilies: { include: { family: true } },
       profileTags: { include: { tag: true } },
     },
   });
@@ -44,7 +44,7 @@ export async function getEssenceRecommendations(rawAnswers: QuizAnswers): Promis
     id: product.id,
     intensity: product.intensity,
     concentration: product.concentration,
-    olfactoryFamilyName: product.olfactoryFamily?.name ?? null,
+    olfactoryFamilyNames: product.olfactoryFamilies.map((f) => f.family.name),
     personalityTags: product.profileTags.filter((pt) => pt.tag.type === "PERSONALITY").map((pt) => pt.tag),
     occasionTags: product.profileTags.filter((pt) => pt.tag.type === "OCCASION").map((pt) => pt.tag),
   }));

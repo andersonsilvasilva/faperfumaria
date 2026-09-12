@@ -97,6 +97,7 @@ export function ProductForm({
 
   const selectedCategoryIds = new Set(product?.categories.map((c) => c.categoryId) ?? []);
   const selectedTagIds = new Set(product?.profileTags.map((t) => t.tagId) ?? []);
+  const selectedFamilyIds = new Set(product?.olfactoryFamilies.map((f) => f.familyId) ?? []);
 
   function updateVariant(index: number, patch: Partial<VariantRow>) {
     setVariants((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
@@ -294,23 +295,21 @@ export function ProductForm({
       <section id="fragrancia" className="space-y-4">
         <h2 className="font-display text-lg text-fa-black">Fragrância</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className={labelClass} htmlFor="olfactoryFamilyId">
-              Família olfativa
-            </label>
-            <select
-              id="olfactoryFamilyId"
-              name="olfactoryFamilyId"
-              defaultValue={product?.olfactoryFamilyId ?? ""}
-              className={inputClass}
-            >
-              <option value="">Nenhuma</option>
+          <div className="sm:col-span-2">
+            <p className={labelClass}>Família olfativa</p>
+            <div className="mt-2 flex flex-wrap gap-3">
               {options.olfactoryFamilies.map((family) => (
-                <option key={family.id} value={family.id}>
+                <label key={family.id} className="flex items-center gap-2 text-sm text-fa-black/70">
+                  <input
+                    type="checkbox"
+                    name="olfactoryFamilyIds"
+                    value={family.id}
+                    defaultChecked={selectedFamilyIds.has(family.id)}
+                  />
                   {family.name}
-                </option>
+                </label>
               ))}
-            </select>
+            </div>
           </div>
           <div>
             <label className={labelClass} htmlFor="intensity">

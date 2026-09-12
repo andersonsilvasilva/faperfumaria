@@ -37,6 +37,7 @@ const adminProductDetailInclude = {
   images: { orderBy: { position: "asc" as const } },
   variants: { orderBy: [{ volumeMl: "asc" as const }, { createdAt: "asc" as const }] },
   categories: true,
+  olfactoryFamilies: true,
   fragranceNotes: { include: { note: true } },
   profileTags: true,
 } satisfies Prisma.ProductInclude;

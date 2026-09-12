@@ -22,7 +22,7 @@ export interface QuizCandidate {
   id: string;
   intensity: Intensity | null;
   concentration: string | null;
-  olfactoryFamilyName: string | null;
+  olfactoryFamilyNames: string[];
   personalityTags: Tag[];
   occasionTags: Tag[];
 }
@@ -93,7 +93,7 @@ function scoreCandidate(candidate: QuizCandidate, answers: QuizAnswers): number 
   const targetIntensity = CONCENTRATION_BY_FIXATION[answers.fixation].intensity;
   const concentrationKeyword = CONCENTRATION_BY_FIXATION[answers.fixation].keyword;
 
-  if (candidate.olfactoryFamilyName === profile.familyName) {
+  if (candidate.olfactoryFamilyNames.includes(profile.familyName)) {
     score += WEIGHTS.family;
   }
 
@@ -123,8 +123,14 @@ function scoreCandidate(candidate: QuizCandidate, answers: QuizAnswers): number 
 function buildExplanation(candidate: QuizCandidate, answers: QuizAnswers): string {
   const parts: string[] = [];
 
-  if (candidate.olfactoryFamilyName) {
-    parts.push(candidate.olfactoryFamilyName.toLowerCase());
+  // Prioriza a família que bateu com o perfil ideal (o motivo real da recomendação); se nenhuma
+  // bateu (o produto entrou no resultado por outro critério), usa a primeira família como fallback.
+  const profile = resolveIdealProfile(answers);
+  const matchedFamily = candidate.olfactoryFamilyNames.includes(profile.familyName)
+    ? profile.familyName
+    : candidate.olfactoryFamilyNames[0];
+  if (matchedFamily) {
+    parts.push(matchedFamily.toLowerCase());
   }
 
   const stylePersonalities = PERSONALITIES_BY_STYLE[answers.style];
