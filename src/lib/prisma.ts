@@ -23,6 +23,11 @@ function createPrismaClient() {
     password: decodeURIComponent(url.password),
     database: url.pathname.replace(/^\//, ""),
     connectionLimit: 5,
+    // MySQL 8 usa caching_sha2_password: após qualquer reinício do MySQL (ex.: reboot da VPS) o
+    // cache de autenticação fica vazio e o servidor exige o login completo, que sem TLS precisa da
+    // chave pública RSA. Sem esta opção o pool inteiro falha ("RSA public key is not available")
+    // e o site cai com erro 500. Seguro aqui: o banco só escuta em 127.0.0.1.
+    allowPublicKeyRetrieval: true,
   });
   return new PrismaClient({ adapter });
 }
