@@ -75,7 +75,12 @@ export class MercadoPagoProvider implements PaymentProvider {
         token: input.cardToken,
         installments: input.installments,
         payment_method_id: input.paymentMethodId,
-        payer: { email: input.payerEmail, first_name: input.payerName },
+        ...(input.issuerId ? { issuer_id: Number(input.issuerId) } : {}),
+        payer: {
+          email: input.payerEmail,
+          first_name: input.payerName,
+          ...(input.payerCpf ? { identification: { type: "CPF", number: input.payerCpf } } : {}),
+        },
         external_reference: input.orderNumber,
         notification_url: WEBHOOK_URL,
       },

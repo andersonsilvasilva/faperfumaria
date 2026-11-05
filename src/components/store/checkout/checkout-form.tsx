@@ -8,6 +8,8 @@ import { createOrderAction, type CheckoutActionState } from "@/modules/orders/ac
 import { calculateShippingAction, type ShippingCalcState } from "@/modules/shipping/actions";
 import { trackEvent, toAnalyticsItem } from "@/lib/analytics";
 import { lookupCepClient } from "@/lib/viacep-client";
+import { MAX_CARD_INSTALLMENTS } from "@/modules/payments/constants";
+import { CardPaymentBrick, type CardBrickResult } from "@/components/store/checkout/card-payment-brick";
 
 const initialCheckoutState: CheckoutActionState = { status: "idle" };
 const initialShippingState: ShippingCalcState = { status: "idle" };
@@ -40,6 +42,7 @@ export function CheckoutForm({
   subtotal,
   discount,
   allowCardPayment,
+  mercadoPagoPublicKey,
   analyticsItems,
   initialContact,
   initialAddress,
@@ -47,6 +50,8 @@ export function CheckoutForm({
   subtotal: number;
   discount: number;
   allowCardPayment: boolean;
+  /** Presente só quando o provider real do Mercado Pago está ativo; sem ela, o cartão usa o mock. */
+  mercadoPagoPublicKey?: string;
   analyticsItems: CheckoutAnalyticsItem[];
   initialContact?: CheckoutInitialContact;
   initialAddress?: CheckoutInitialAddress;
@@ -59,6 +64,14 @@ export function CheckoutForm({
   const [, startTransition] = useTransition();
   const [selectedMethod, setSelectedMethod] = useState<string>("LOCAL_PICKUP");
   const [paymentMethod, setPaymentMethod] = useState<string>("PIX");
+  const [installments, setInstallments] = useState(1);
+  const formRef = useRef<HTMLFormElement>(null);
+  const cardTokenRef = useRef<HTMLInputElement>(null);
+  const cardMethodRef = useRef<HTMLInputElement>(null);
+  const cardIssuerRef = useRef<HTMLInputElement>(null);
+  const cardCpfRef = useRef<HTMLInputElement>(null);
+  const installmentsRef = useRef<HTMLInputElement>(null);
+  const brickDoneRef = useRef<(() => void) | null>(null);
   const [cepStatus, setCepStatus] = useState<"idle" | "loading" | "error">("idle");
   const streetRef = useRef<HTMLInputElement>(null);
   const neighborhoodRef = useRef<HTMLInputElement>(null);
@@ -76,6 +89,34 @@ export function CheckoutForm({
   const selectedOption = shippingState.options?.find((o) => o.method === selectedMethod);
   const shippingCost = selectedMethod === "LOCAL_PICKUP" ? 0 : (selectedOption?.cost ?? 0);
   const total = Math.max(0, subtotal - discount) + shippingCost;
+
+  // Libera o botão do Brick quando o servidor responde (erro de validação ou cartão recusado).
+  useEffect(() => {
+    if (!isSubmitting) {
+      brickDoneRef.current?.();
+      brickDoneRef.current = null;
+    }
+  }, [isSubmitting]);
+
+  const useBrick = paymentMethod === "CARD" && Boolean(mercadoPagoPublicKey);
+
+  function handleBrickSubmit(result: CardBrickResult): Promise<void> {
+    const form = formRef.current;
+    if (!form) return Promise.reject(new Error("Formulário indisponível."));
+    // Valida contato/entrega antes de enviar o cartão; o Brick mostra erro se rejeitarmos.
+    if (!form.reportValidity()) return Promise.reject(new Error("Preencha os campos obrigatórios."));
+
+    if (cardTokenRef.current) cardTokenRef.current.value = result.token;
+    if (cardMethodRef.current) cardMethodRef.current.value = result.paymentMethodId;
+    if (cardIssuerRef.current) cardIssuerRef.current.value = result.issuerId;
+    if (cardCpfRef.current) cardCpfRef.current.value = result.holderCpf ?? "";
+    if (installmentsRef.current) installmentsRef.current.value = String(result.installments);
+
+    return new Promise<void>((resolve) => {
+      brickDoneRef.current = resolve;
+      form.requestSubmit();
+    });
+  }
 
   useEffect(() => {
     trackEvent("begin_checkout", {
@@ -96,6 +137,7 @@ export function CheckoutForm({
 
   return (
     <form
+      ref={formRef}
       action={checkoutAction}
       onSubmit={() =>
         trackEvent("add_payment_info", { currency: "BRL", value: total, payment_type: paymentMethod })
@@ -104,6 +146,15 @@ export function CheckoutForm({
     >
       <input type="hidden" name="shippingMethod" value={selectedMethod} />
       <input type="hidden" name="paymentMethod" value={paymentMethod} />
+      <input type="hidden" name="cardToken" ref={cardTokenRef} />
+      <input type="hidden" name="cardPaymentMethodId" ref={cardMethodRef} />
+      <input type="hidden" name="cardIssuerId" ref={cardIssuerRef} />
+      <input type="hidden" name="cardHolderCpf" ref={cardCpfRef} />
+      {mercadoPagoPublicKey ? (
+        <input type="hidden" name="installments" ref={installmentsRef} defaultValue="1" />
+      ) : (
+        <input type="hidden" name="installments" value={paymentMethod === "CARD" ? installments : 1} />
+      )}
 
       <div className="space-y-8">
         <section className="rounded-sm border border-fa-stone/15 bg-fa-white p-6 shadow-[0_20px_45px_-30px_rgba(11,11,11,0.4)]">
@@ -290,6 +341,25 @@ export function CheckoutForm({
                 Cartão de crédito
               </label>
             )}
+            {paymentMethod === "CARD" && !mercadoPagoPublicKey && (
+              <div className="ml-6 mt-2 space-y-2">
+                <label htmlFor="installments-select" className="text-xs font-medium text-fa-black/70">
+                  Parcelas (modo de teste — sem cobrança real)
+                </label>
+                <select
+                  id="installments-select"
+                  value={installments}
+                  onChange={(e) => setInstallments(Number(e.target.value))}
+                  className="h-10 w-full rounded-sm border border-fa-stone/40 px-3 text-sm"
+                >
+                  {Array.from({ length: MAX_CARD_INSTALLMENTS }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={n}>
+                      {n}x de {formatPrice(total / n)} sem juros
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             {selectedMethod === "LOCAL_PICKUP" && (
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -301,6 +371,21 @@ export function CheckoutForm({
               </label>
             )}
           </div>
+          {useBrick && mercadoPagoPublicKey && (
+            <div className="mt-6">
+              <p className="mb-2 text-xs text-fa-black/60">
+                Até {MAX_CARD_INSTALLMENTS}x sem juros no cartão de crédito. Seus dados de cartão são
+                processados com segurança pelo Mercado Pago.
+              </p>
+              <CardPaymentBrick
+                key={total.toFixed(2)}
+                publicKey={mercadoPagoPublicKey}
+                amount={Number(total.toFixed(2))}
+                maxInstallments={MAX_CARD_INSTALLMENTS}
+                onSubmit={handleBrickSubmit}
+              />
+            </div>
+          )}
         </section>
       </div>
 
@@ -331,9 +416,15 @@ export function CheckoutForm({
           <p className="text-sm text-red-600">{checkoutState.message}</p>
         )}
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? "Processando..." : "Finalizar compra"}
-        </Button>
+        {useBrick ? (
+          <p className="text-xs text-fa-black/60">
+            Para concluir, use o botão de pagamento do formulário do cartão.
+          </p>
+        ) : (
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? "Processando..." : "Finalizar compra"}
+          </Button>
+        )}
       </div>
     </form>
   );

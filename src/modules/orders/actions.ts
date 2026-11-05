@@ -10,6 +10,7 @@ import { getShippingOptions } from "@/modules/shipping/provider";
 import { validateCoupon } from "@/modules/coupons/validate";
 import { generateOrderNumber } from "@/modules/orders/order-number";
 import { getPaymentProvider } from "@/modules/payments";
+import { MAX_CARD_INSTALLMENTS } from "@/modules/payments/constants";
 import { formatVariantLabel } from "@/lib/format";
 import { sendOrderEmail } from "@/modules/email/send-order-email";
 
@@ -30,6 +31,24 @@ const checkoutSchema = z
     contactPhone: z.string().trim().min(8, "Telefone inválido."),
     shippingMethod: z.enum(["LOCAL_PICKUP", "LOCAL_DELIVERY", "NATIONAL"]),
     paymentMethod: z.enum(["PIX", "CARD", "CASH"]),
+    // Parcelamento do cartão: a loja oferece até MAX_CARD_INSTALLMENTS sem juros. Validado aqui
+    // (nunca confiar no que o navegador enviou).
+    installments: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(MAX_CARD_INSTALLMENTS, `Parcelamento máximo: ${MAX_CARD_INSTALLMENTS}x.`)
+      .optional()
+      .default(1),
+    cardToken: z.string().trim().optional().default(""),
+    cardPaymentMethodId: z.string().trim().optional().default(""),
+    cardIssuerId: z.string().trim().optional().default(""),
+    cardHolderCpf: z
+      .string()
+      .trim()
+      .optional()
+      .default("")
+      .transform((v) => v.replace(/\D/g, "")),
     cep: z.string().trim().optional().default(""),
     street: z.string().trim().optional().default(""),
     number: z.string().trim().optional().default(""),
@@ -53,6 +72,17 @@ const checkoutSchema = z
           ctx.addIssue({ code: "custom", path: [field], message: "Campo obrigatório." });
         }
       }
+    }
+    if (
+      data.paymentMethod === "CARD" &&
+      process.env.PAYMENT_PROVIDER === "mercadopago" &&
+      (!data.cardToken || !data.cardPaymentMethodId)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cardToken"],
+        message: "Preencha os dados do cartão para finalizar a compra.",
+      });
     }
     if (data.paymentMethod === "CASH" && data.shippingMethod !== "LOCAL_PICKUP") {
       ctx.addIssue({
@@ -225,6 +255,7 @@ export async function createOrderAction(
 
   // Pedido já criado e estoque reservado — problemas no pagamento a partir daqui não devem
   // apagar o pedido; o cliente pode tentar pagar novamente a partir da página de confirmação.
+  let paymentDeclined = false;
   try {
     if (data.paymentMethod === "CASH") {
       // Sem provider envolvido: o pagamento acontece em dinheiro na retirada, e um admin
@@ -263,9 +294,11 @@ export async function createOrderAction(
         payerEmail: data.contactEmail,
         payerName: data.contactName,
         description: `Pedido ${orderNumber} — FA Perfumaria`,
-        cardToken: String(raw.cardToken ?? "mock-token"),
-        installments: Number(raw.installments ?? 1),
-        paymentMethodId: String(raw.cardBrand ?? "master"),
+        cardToken: data.cardToken || "mock-token",
+        installments: data.installments,
+        paymentMethodId: data.cardPaymentMethodId || "master",
+        issuerId: data.cardIssuerId || undefined,
+        payerCpf: data.cardHolderCpf || data.contactCpf,
       });
 
       const cardStatus = card.status === "APPROVED" ? "APPROVED" : card.status === "REJECTED" ? "REJECTED" : "PENDING";
@@ -278,8 +311,50 @@ export async function createOrderAction(
           status: cardStatus,
           amount: total,
           externalId: card.externalId,
+          rawPayload: { installments: data.installments },
         },
       });
+
+      if (cardStatus === "REJECTED") {
+        // Cartão recusado na hora: desfaz o pedido (libera a reserva) e devolve os itens ao
+        // carrinho, para o cliente tentar de novo com outro cartão sem refazer a compra.
+        await prisma.$transaction([
+          prisma.order.update({ where: { id: orderId }, data: { status: "PAYMENT_FAILED" } }),
+          ...cartWithItems.items.map((item) =>
+            prisma.productVariant.update({
+              where: { id: item.variant.id },
+              data: { stockQty: { increment: item.quantity } },
+            }),
+          ),
+          prisma.inventoryMovement.createMany({
+            data: cartWithItems.items.map((item) => ({
+              variantId: item.variant.id,
+              type: "RELEASE" as const,
+              quantity: item.quantity,
+              orderId,
+            })),
+          }),
+          prisma.cartItem.createMany({
+            data: cartWithItems.items.map((item) => ({
+              cartId: cartWithItems.id,
+              variantId: item.variant.id,
+              quantity: item.quantity,
+              unitPriceSnapshot: item.unitPriceSnapshot,
+            })),
+          }),
+          // Pedido desfeito: o cupom volta a ficar disponível.
+          prisma.couponUsage.deleteMany({ where: { orderId } }),
+          prisma.cart.update({
+            where: { id: cartWithItems.id },
+            data: {
+              couponId: cartWithItems.couponId,
+              giftWrap: cartWithItems.giftWrap,
+              giftMessage: cartWithItems.giftMessage,
+            },
+          }),
+        ]);
+        paymentDeclined = true;
+      }
 
       if (cardStatus === "APPROVED") {
         await prisma.order.update({
@@ -301,6 +376,13 @@ export async function createOrderAction(
   } catch {
     // Pagamento falhou ao processar (ex.: provider indisponível) — o pedido continua criado
     // como PENDING_PAYMENT; a página de confirmação orienta o cliente a tentar novamente.
+  }
+
+  if (paymentDeclined) {
+    return {
+      status: "error",
+      message: "O pagamento foi recusado pela operadora do cartão. Confira os dados ou tente outro cartão.",
+    };
   }
 
   redirect(`/pedido/${orderNumber}`);

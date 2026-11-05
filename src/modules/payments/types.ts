@@ -26,6 +26,9 @@ export interface CreateCardPaymentInput {
   cardToken: string;
   installments: number;
   paymentMethodId: string;
+  issuerId?: string;
+  /** CPF (só dígitos) do pagador, enviado ao antifraude do provider. */
+  payerCpf?: string;
 }
 
 export interface CreateCardPaymentResult {

@@ -72,7 +72,11 @@ export default async function CheckoutPage() {
       cart.coupon.type === "PERCENTAGE" ? Math.round(((subtotal * value) / 100) * 100) / 100 : Math.min(value, subtotal);
   }
 
-  const allowCardPayment = process.env.PAYMENT_PROVIDER !== "mercadopago";
+  // Cartão disponível nos dois modos: mock (formulário simples de teste) e Mercado Pago real
+  // (Card Payment Brick, que precisa da Public Key — lida em runtime, sem rebuild).
+  const allowCardPayment = true;
+  const mercadoPagoPublicKey =
+    process.env.PAYMENT_PROVIDER === "mercadopago" ? process.env.MERCADO_PAGO_PUBLIC_KEY || undefined : undefined;
 
   const analyticsItems = cart.items.map((item) => ({
     id: item.variant.id,
@@ -90,6 +94,7 @@ export default async function CheckoutPage() {
           subtotal={subtotal}
           discount={discount}
           allowCardPayment={allowCardPayment}
+          mercadoPagoPublicKey={mercadoPagoPublicKey}
           analyticsItems={analyticsItems}
           initialContact={initialContact}
           initialAddress={initialAddress}

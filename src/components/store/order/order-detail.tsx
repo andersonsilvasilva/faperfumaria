@@ -117,6 +117,17 @@ export async function OrderDetail({
         </div>
       )}
 
+      {latestPayment?.method === "CARD" && (
+        <p className="mt-6 rounded-sm border border-fa-stone/15 bg-fa-white p-4 text-sm text-fa-black/70">
+          Cartão de crédito
+          {(() => {
+            const installments = (latestPayment.rawPayload as { installments?: number } | null)?.installments;
+            return installments && installments > 1 ? ` em ${installments}x sem juros` : " à vista";
+          })()}
+          {latestPayment.status === "PENDING" && " — pagamento em análise pela operadora."}
+        </p>
+      )}
+
       {isCashPending && (
         <div className="mt-8 rounded-sm border border-fa-gold/40 bg-fa-gold/10 p-6 text-center">
           <p className="font-display text-lg text-fa-black">Pagamento na retirada</p>
