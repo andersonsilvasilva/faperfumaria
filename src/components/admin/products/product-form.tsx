@@ -19,6 +19,8 @@ interface VariantRow {
   barcode: string;
   weightGrams: string;
   isActive: boolean;
+  /** Só para exibição (estoque atual); não é enviado nem gravado pelo formulário. */
+  stockQty?: number;
 }
 
 interface ImageRow {
@@ -74,6 +76,7 @@ export function ProductForm({
           barcode: v.barcode ?? "",
           weightGrams: v.weightGrams ? String(v.weightGrams) : "",
           isActive: v.isActive,
+          stockQty: v.stockQty,
         }))
       : [
           {
@@ -423,59 +426,125 @@ export function ProductForm({
         <p className="text-xs text-fa-black/50">
           Estoque inicial começa em 0 — ajuste a quantidade na tela de Estoque após salvar, para
           manter o histórico de movimentações correto. Informe o volume (ml) para perfumes, ou um
-          rótulo (tamanho, cor...) para produtos sem volume, como acessórios.
+          rótulo (tamanho, cor...) para produtos sem volume, como acessórios. Variantes já salvas
+          não podem ser apagadas (podem ter pedidos); desmarque &quot;Ativa&quot; para escondê-las.
         </p>
         <div className="space-y-3">
           {variants.map((variant, index) => (
-            <div key={index} className="grid grid-cols-2 gap-2 rounded-sm border border-fa-stone/20 p-3 sm:grid-cols-7">
-              <input
-                placeholder="Volume (ml)"
-                type="number"
-                value={variant.volumeMl}
-                onChange={(e) => updateVariant(index, { volumeMl: e.target.value })}
-                className={inputClass}
-              />
-              <input
-                placeholder="Ou rótulo (tamanho, cor...)"
-                value={variant.variantLabel}
-                onChange={(e) => updateVariant(index, { variantLabel: e.target.value })}
-                className={inputClass}
-              />
-              <input
-                placeholder="SKU"
-                value={variant.sku}
-                onChange={(e) => updateVariant(index, { sku: e.target.value })}
-                className={inputClass}
-              />
-              <input
-                placeholder="Preço"
-                type="number"
-                step="0.01"
-                value={variant.price}
-                onChange={(e) => updateVariant(index, { price: e.target.value })}
-                className={inputClass}
-              />
-              <input
-                placeholder="Estoque mín."
-                type="number"
-                value={variant.minStockQty}
-                onChange={(e) => updateVariant(index, { minStockQty: e.target.value })}
-                className={inputClass}
-              />
-              <input
-                placeholder="Código de barras"
-                value={variant.barcode}
-                onChange={(e) => updateVariant(index, { barcode: e.target.value })}
-                className={inputClass}
-              />
-              <label className="flex items-center gap-2 text-sm text-fa-black/70">
-                <input
-                  type="checkbox"
-                  checked={variant.isActive}
-                  onChange={(e) => updateVariant(index, { isActive: e.target.checked })}
-                />
-                Ativa
-              </label>
+            <div key={variant.id ?? `new-${index}`} className="rounded-sm border border-fa-stone/20 p-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+                <div>
+                  <label className={labelClass} htmlFor={`variant-${index}-volume`}>
+                    Volume (ml)
+                  </label>
+                  <input
+                    id={`variant-${index}-volume`}
+                    type="number"
+                    min="1"
+                    value={variant.volumeMl}
+                    onChange={(e) => updateVariant(index, { volumeMl: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor={`variant-${index}-label`}>
+                    Ou rótulo (tamanho, cor...)
+                  </label>
+                  <input
+                    id={`variant-${index}-label`}
+                    value={variant.variantLabel}
+                    onChange={(e) => updateVariant(index, { variantLabel: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor={`variant-${index}-sku`}>
+                    SKU
+                  </label>
+                  <input
+                    id={`variant-${index}-sku`}
+                    value={variant.sku}
+                    onChange={(e) => updateVariant(index, { sku: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor={`variant-${index}-price`}>
+                    Preço (R$)
+                  </label>
+                  <input
+                    id={`variant-${index}-price`}
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={variant.price}
+                    onChange={(e) => updateVariant(index, { price: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor={`variant-${index}-min`}>
+                    Estoque mínimo
+                  </label>
+                  <input
+                    id={`variant-${index}-min`}
+                    type="number"
+                    min="0"
+                    value={variant.minStockQty}
+                    onChange={(e) => updateVariant(index, { minStockQty: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor={`variant-${index}-weight`}>
+                    Peso (g)
+                  </label>
+                  <input
+                    id={`variant-${index}-weight`}
+                    type="number"
+                    min="1"
+                    value={variant.weightGrams}
+                    onChange={(e) => updateVariant(index, { weightGrams: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="col-span-2 sm:col-span-2">
+                  <label className={labelClass} htmlFor={`variant-${index}-barcode`}>
+                    Código de barras
+                  </label>
+                  <input
+                    id={`variant-${index}-barcode`}
+                    value={variant.barcode}
+                    onChange={(e) => updateVariant(index, { barcode: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+                <label className="flex items-center gap-2 text-fa-black/70">
+                  <input
+                    type="checkbox"
+                    checked={variant.isActive}
+                    onChange={(e) => updateVariant(index, { isActive: e.target.checked })}
+                  />
+                  Ativa (visível na loja)
+                </label>
+                {variant.id ? (
+                  <span className="text-xs text-fa-black/50">
+                    Estoque atual: <strong className="text-fa-black">{variant.stockQty ?? 0}</strong> — ajuste na tela
+                    de Estoque
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setVariants((rows) => rows.filter((_, i) => i !== index))}
+                    disabled={variants.length === 1}
+                    className="text-xs text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Remover variante
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

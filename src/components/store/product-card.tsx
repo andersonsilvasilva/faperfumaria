@@ -9,9 +9,11 @@ import type { ProductCardData } from "@/modules/catalog/queries";
 export function ProductCard({ product, priority = false }: { product: ProductCardData; priority?: boolean }) {
   const mainImage = product.images[0];
   const firstVariant = product.variants[0];
+  // O botão adiciona a primeira variante ao carrinho, então o preço exibido tem que ser o dela
+  // (o preço do produto é só referência e pode divergir quando as variações têm preços distintos).
+  const displayPrice = firstVariant ? Number(firstVariant.price.toString()) : Number(product.price.toString());
   const hasOffer =
-    product.compareAtPrice != null &&
-    Number(product.compareAtPrice.toString()) > Number(product.price.toString());
+    product.compareAtPrice != null && Number(product.compareAtPrice.toString()) > displayPrice;
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-sm border border-fa-stone/15 bg-fa-white shadow-[0_15px_35px_-20px_rgba(11,11,11,0.35)] transition-shadow duration-300 hover:shadow-[0_25px_45px_-20px_rgba(11,11,11,0.45)]">
@@ -54,7 +56,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
         {firstVariant && <p className="text-xs text-fa-black/50">{formatVariantLabel(firstVariant)}</p>}
 
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-lg font-semibold text-fa-black">{formatPrice(product.price)}</span>
+          <span className="text-lg font-semibold text-fa-black">{formatPrice(displayPrice)}</span>
           {hasOffer && (
             <span className="text-sm text-fa-black/40 line-through">
               {formatPrice(product.compareAtPrice!)}
@@ -62,7 +64,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
           )}
         </div>
         <p className="text-xs text-fa-black/50">
-          {formatInstallments(product.price, product.maxInstallments ?? undefined)}
+          {formatInstallments(displayPrice,product.maxInstallments ?? undefined)}
         </p>
 
         {firstVariant && (
@@ -71,7 +73,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
             disabled={firstVariant.stockQty <= 0}
             productName={product.name}
             brandName={product.brand.name}
-            price={Number(product.price.toString())}
+            price={displayPrice}
             className="mt-3 w-full rounded-sm border border-fa-gold bg-fa-gold py-2 text-xs font-medium uppercase tracking-wide text-fa-black shadow-sm transition-colors hover:bg-fa-gold-light hover:border-fa-gold-light disabled:cursor-not-allowed disabled:border-fa-stone/30 disabled:bg-transparent disabled:text-fa-black/40"
           />
         )}
