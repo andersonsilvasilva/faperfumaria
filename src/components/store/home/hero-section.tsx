@@ -50,7 +50,6 @@ export async function HeroSection() {
               alt={banner?.title ?? "Perfume em destaque sobre mármore, com estante de fragrâncias ao fundo"}
               fill
               priority
-              unoptimized={banner?.desktopImage.startsWith("/uploads/")}
               className={banner?.mobileImage ? "hidden object-cover md:block" : "object-cover"}
               sizes="(min-width: 768px) 50vw, 100vw"
             />
@@ -60,7 +59,6 @@ export async function HeroSection() {
                 alt={banner.title}
                 fill
                 priority
-                unoptimized={banner.mobileImage.startsWith("/uploads/")}
                 className="object-cover md:hidden"
                 sizes="100vw"
               />

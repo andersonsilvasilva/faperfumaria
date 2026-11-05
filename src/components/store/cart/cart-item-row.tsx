@@ -68,7 +68,6 @@ export function CartItemRow({ item }: { item: CartItemRowData }) {
             src={image.url}
             alt={image.altText ?? item.variant.product.name}
             fill
-            unoptimized={image.url.startsWith("/uploads/")}
             className="object-cover"
           />
         </div>
