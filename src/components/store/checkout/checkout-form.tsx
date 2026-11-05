@@ -374,8 +374,9 @@ export function CheckoutForm({
           {useBrick && mercadoPagoPublicKey && (
             <div className="mt-6">
               <p className="mb-2 text-xs text-fa-black/60">
-                Até {MAX_CARD_INSTALLMENTS}x sem juros no cartão de crédito. Seus dados de cartão são
-                processados com segurança pelo Mercado Pago.
+                Até {MAX_CARD_INSTALLMENTS}x sem juros no cartão de crédito. As parcelas aparecem
+                depois que você digita o número do cartão. Seus dados de cartão são processados com
+                segurança pelo Mercado Pago.
               </p>
               <CardPaymentBrick
                 key={total.toFixed(2)}
