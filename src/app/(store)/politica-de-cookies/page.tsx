@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function PoliticaDeCookiesPage() {
   return (
-    <LegalPage title="Política de Cookies" updatedAt="setembro de 2026">
+    <LegalPage title="Política de Cookies" updatedAt="novembro de 2026">
       <p>
         Cookies são pequenos arquivos armazenados no seu navegador que ajudam o site a funcionar
         corretamente e a entender como você o utiliza.
@@ -20,15 +20,22 @@ export default function PoliticaDeCookiesPage() {
         itens no seu carrinho e a sua sessão de login. Não podem ser desativados.
       </p>
       <p>
-        <strong>Analíticos:</strong> quando configurados (Google Analytics), nos ajudam a entender
-        quais páginas e produtos têm mais interesse, de forma agregada e anônima.
+        <strong>Analíticos (Google Analytics):</strong> nos ajudam a entender quais páginas e
+        produtos têm mais interesse. Só são ativados depois que você clica em &quot;Aceitar&quot;
+        no aviso de cookies.
       </p>
       <p>
-        <strong>Marketing:</strong> quando configurados (Meta Pixel), ajudam a medir a efetividade
-        de anúncios em redes sociais.
+        <strong>Marketing (Meta Pixel):</strong> ajudam a medir a efetividade de anúncios no
+        Facebook e Instagram e a mostrar anúncios mais relevantes. Só são ativados depois que você
+        clica em &quot;Aceitar&quot; no aviso de cookies.
       </p>
 
       <h2 className="font-display text-xl text-fa-black">Como gerenciar cookies</h2>
+      <p>
+        Você pode mudar a sua escolha a qualquer momento pelo link &quot;Preferências de
+        cookies&quot; no rodapé do site. Se recusar, a loja continua funcionando normalmente, sem
+        os cookies de análise e marketing.
+      </p>
       <p>
         Você pode bloquear ou apagar cookies a qualquer momento nas configurações do seu
         navegador. Note que desativar cookies essenciais pode afetar o funcionamento do carrinho

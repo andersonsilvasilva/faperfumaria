@@ -3,6 +3,7 @@ import { Header } from "@/components/store/header";
 import { Footer } from "@/components/store/footer";
 import { FavoritesProvider } from "@/components/store/favorites/favorites-provider";
 import { AnalyticsScripts } from "@/components/analytics/analytics-scripts";
+import { CookieBanner } from "@/components/store/cookie-banner";
 import { MaintenancePage } from "@/components/store/maintenance-page";
 import { getMaintenanceMode } from "@/modules/settings/maintenance";
 import { getSiteBackground } from "@/modules/settings/site-background";
@@ -21,6 +22,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     getSiteBackground(),
   ]);
 
+  const trackingConfigured = Boolean(process.env.NEXT_PUBLIC_GA_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID);
   const isAdmin = session?.user?.role === "ADMIN";
   const isBlocked = maintenance.enabled && !isAdmin && !MAINTENANCE_ALLOWED_PATHS.has(pathname);
   const backgroundStyle = { background: `linear-gradient(180deg, ${background.colorStart}, ${background.colorEnd})` };
@@ -42,6 +44,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         <main className="flex-1">{children}</main>
         <Footer />
         <BackToTopButton />
+        {trackingConfigured && <CookieBanner />}
       </FavoritesProvider>
     </div>
   );

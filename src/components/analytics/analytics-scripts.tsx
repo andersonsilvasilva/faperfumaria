@@ -1,14 +1,23 @@
+"use client";
+
 import { Suspense } from "react";
 import Script from "next/script";
 import { MetaPixelPageView } from "@/components/analytics/meta-pixel-pageview";
+import { useCookieConsent } from "@/lib/cookie-consent";
 
 /**
- * Carrega GA4/Meta Pixel só quando as variáveis de ambiente estiverem configuradas — em
- * desenvolvimento (sem valores em .env), nada é carregado. Ver docs/integrations.md.
+ * Carrega GA4/Meta Pixel só quando as variáveis de ambiente estiverem configuradas E o visitante
+ * tiver aceitado os cookies de análise/marketing (LGPD). É um Client Component de propósito: o
+ * texto dos scripts nem chega ao navegador antes do "Aceitar" (NEXT_PUBLIC_* é embutido no
+ * bundle do cliente em tempo de build). Em desenvolvimento (sem valores em .env), nada é
+ * carregado. Ver docs/integrations.md.
  */
 export function AnalyticsScripts() {
+  const consent = useCookieConsent();
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
   const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+
+  if (consent !== "accepted") return null;
 
   return (
     <>
@@ -25,8 +34,9 @@ export function AnalyticsScripts() {
         </>
       )}
       {pixelId && (
-        <Script id="meta-pixel-init" strategy="afterInteractive">
-          {`!function(f,b,e,v,n,t,s)
+        <>
+          <Script id="meta-pixel-init" strategy="afterInteractive">
+            {`!function(f,b,e,v,n,t,s)
             {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
             n.callMethod.apply(n,arguments):n.queue.push(arguments)};
             if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
@@ -36,23 +46,10 @@ export function AnalyticsScripts() {
             'https://connect.facebook.net/en_US/fbevents.js');
             fbq('init', '${pixelId}');
             fbq('track', 'PageView');`}
-        </Script>
-      )}
-      {pixelId && (
-        <>
+          </Script>
           <Suspense fallback={null}>
             <MetaPixelPageView />
           </Suspense>
-          <noscript>
-            {/* eslint-disable-next-line @next/next/no-img-element -- pixel de rastreamento 1x1 exigido pela Meta para navegadores sem JS */}
-            <img
-              height={1}
-              width={1}
-              style={{ display: "none" }}
-              alt=""
-              src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
-            />
-          </noscript>
         </>
       )}
     </>

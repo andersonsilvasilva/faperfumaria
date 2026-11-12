@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
+import { CookiePreferencesButton } from "@/components/store/cookie-preferences-button";
 
 const columns = [
   {
@@ -63,6 +64,11 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              {column.title === "Institucional" && (
+                <li>
+                  <CookiePreferencesButton className="text-sm text-fa-off-white/80 hover:text-fa-gold-light" />
+                </li>
+              )}
             </ul>
           </div>
         ))}
