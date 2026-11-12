@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import Script from "next/script";
+import { MetaPixelPageView } from "@/components/analytics/meta-pixel-pageview";
 
 /**
  * Carrega GA4/Meta Pixel só quando as variáveis de ambiente estiverem configuradas — em
@@ -35,6 +37,23 @@ export function AnalyticsScripts() {
             fbq('init', '${pixelId}');
             fbq('track', 'PageView');`}
         </Script>
+      )}
+      {pixelId && (
+        <>
+          <Suspense fallback={null}>
+            <MetaPixelPageView />
+          </Suspense>
+          <noscript>
+            {/* eslint-disable-next-line @next/next/no-img-element -- pixel de rastreamento 1x1 exigido pela Meta para navegadores sem JS */}
+            <img
+              height={1}
+              width={1}
+              style={{ display: "none" }}
+              alt=""
+              src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
+            />
+          </noscript>
+        </>
       )}
     </>
   );

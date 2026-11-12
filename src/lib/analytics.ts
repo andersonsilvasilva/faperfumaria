@@ -52,6 +52,32 @@ const META_PIXEL_EVENT_MAP: Partial<Record<AnalyticsEventName, string>> = {
 };
 
 /**
+ * Converte os parâmetros no formato GA4 (items[], value, currency) para o formato que o Meta
+ * Pixel entende (content_ids, contents, content_type, value, currency). Sem isso o Pixel recebe
+ * os eventos mas não consegue associá-los a produtos (catálogo/otimização de anúncios).
+ */
+function toMetaParams(params: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (params.value != null) out.value = params.value;
+  if (params.currency != null) out.currency = params.currency;
+  if (typeof params.search_term === "string") out.search_string = params.search_term;
+
+  const items = Array.isArray(params.items) ? (params.items as AnalyticsItem[]) : [];
+  if (items.length > 0) {
+    out.content_type = "product";
+    out.content_ids = items.map((item) => item.item_id);
+    out.contents = items.map((item) => ({
+      id: item.item_id,
+      quantity: item.quantity ?? 1,
+      ...(item.price != null ? { item_price: item.price } : {}),
+    }));
+    out.num_items = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
+    if (items.length === 1) out.content_name = items[0].item_name;
+  }
+  return out;
+}
+
+/**
  * Dispara um evento de e-commerce no GA4 e, quando existe equivalente, no Meta Pixel. Não faz
  * nada se os scripts não estiverem carregados (sem NEXT_PUBLIC_GA_ID/NEXT_PUBLIC_META_PIXEL_ID
  * configurados) — nunca lança erro. Ver seção 52 do CLAUDE.md e docs/integrations.md.
@@ -64,7 +90,7 @@ export function trackEvent(name: AnalyticsEventName, params: Record<string, unkn
 
     const metaEvent = META_PIXEL_EVENT_MAP[name];
     if (metaEvent) {
-      window.fbq?.("track", metaEvent, params);
+      window.fbq?.("track", metaEvent, toMetaParams(params));
     }
   } catch {
     // Analytics nunca pode quebrar a navegação do cliente.
