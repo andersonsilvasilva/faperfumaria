@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { sendOrderEmail } from "@/modules/email/send-order-email";
+import { getPaymentProvider } from "@/modules/payments";
+import { processProviderPayment } from "@/modules/payments/reconcile";
 
 export interface OrderStatusActionState {
   status: "idle" | "success" | "error";
@@ -154,4 +156,48 @@ export async function updateOrderStatusAction(
   revalidatePath(`/pedido/${order.orderNumber}`);
 
   return { status: "success", message: "Status do pedido atualizado." };
+}
+
+/**
+ * Consulta o Mercado Pago pelo número do pedido e aplica o estado encontrado. Serve para
+ * regularizar pedidos "Aguardando pagamento" que foram pagos mas cujo pagamento não chegou a ser
+ * registrado (ex.: a chamada ao provider expirou depois da aprovação). Só lê do provider e reusa
+ * a mesma lógica idempotente do webhook.
+ */
+export async function reconcileOrderPaymentAction(
+  _prevState: OrderStatusActionState,
+  formData: FormData,
+): Promise<OrderStatusActionState> {
+  const admin = await requireAdmin();
+  if (!admin.ok) return { status: "error", message: admin.message };
+
+  const orderId = String(formData.get("orderId") ?? "");
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) return { status: "error", message: "Pedido não encontrado." };
+
+  if (process.env.PAYMENT_PROVIDER !== "mercadopago") {
+    return { status: "error", message: "A verificação só está disponível com o Mercado Pago ativo." };
+  }
+
+  try {
+    const found = await getPaymentProvider().findPaymentsByReference(order.orderNumber);
+    if (found.length === 0) {
+      return { status: "error", message: "Nenhum pagamento encontrado no Mercado Pago para este pedido." };
+    }
+
+    const outcomes: string[] = [];
+    for (const details of found) outcomes.push(await processProviderPayment(details));
+
+    revalidatePath(`/admin/pedidos/${orderId}`);
+    revalidatePath("/admin/pedidos");
+
+    if (outcomes.includes("paid")) return { status: "success", message: "Pagamento aprovado encontrado — pedido marcado como pago." };
+    if (outcomes.includes("failed") || outcomes.includes("cancelled")) {
+      return { status: "success", message: "Pagamento recusado/cancelado — pedido atualizado e estoque liberado." };
+    }
+    return { status: "success", message: "Pagamento consultado: nenhuma mudança necessária." };
+  } catch (error) {
+    console.error(`[admin] Falha ao verificar pagamento do pedido ${order.orderNumber}:`, error);
+    return { status: "error", message: "Não foi possível consultar o Mercado Pago agora. Tente novamente." };
+  }
 }

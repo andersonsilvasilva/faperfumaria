@@ -11,6 +11,7 @@ import { validateCoupon } from "@/modules/coupons/validate";
 import { generateOrderNumber } from "@/modules/orders/order-number";
 import { getPaymentProvider } from "@/modules/payments";
 import { MAX_CARD_INSTALLMENTS } from "@/modules/payments/constants";
+import { processProviderPayment } from "@/modules/payments/reconcile";
 import { formatVariantLabel } from "@/lib/format";
 import { sendOrderEmail } from "@/modules/email/send-order-email";
 
@@ -303,17 +304,26 @@ export async function createOrderAction(
 
       const cardStatus = card.status === "APPROVED" ? "APPROVED" : card.status === "REJECTED" ? "REJECTED" : "PENDING";
 
-      await prisma.payment.create({
-        data: {
-          orderId,
-          provider: provider.name,
-          method: "CARD",
-          status: cardStatus,
-          amount: total,
-          externalId: card.externalId,
-          rawPayload: { installments: data.installments },
-        },
-      });
+      // O webhook pode ter chegado antes de gravarmos o pagamento (e já criado o registro).
+      const existingPayment = await prisma.payment.findFirst({ where: { externalId: card.externalId } });
+      if (existingPayment) {
+        await prisma.payment.update({
+          where: { id: existingPayment.id },
+          data: { rawPayload: { installments: data.installments } },
+        });
+      } else {
+        await prisma.payment.create({
+          data: {
+            orderId,
+            provider: provider.name,
+            method: "CARD",
+            status: cardStatus,
+            amount: total,
+            externalId: card.externalId,
+            rawPayload: { installments: data.installments },
+          },
+        });
+      }
 
       if (cardStatus === "REJECTED") {
         // Cartão recusado na hora: desfaz o pedido (libera a reserva) e devolve os itens ao
@@ -357,25 +367,41 @@ export async function createOrderAction(
       }
 
       if (cardStatus === "APPROVED") {
-        await prisma.order.update({
-          where: { id: orderId },
+        // Só quem mudar o pedido de PENDING_PAYMENT para PAID registra a venda — evita contar
+        // duas vezes se o webhook (ou a verificação manual) chegou primeiro.
+        const marked = await prisma.order.updateMany({
+          where: { id: orderId, status: "PENDING_PAYMENT" },
           data: { status: "PAID", paidAt: new Date() },
         });
-        await prisma.inventoryMovement.createMany({
-          data: cartWithItems.items.map((item) => ({
-            variantId: item.variant.id,
-            type: "SALE" as const,
-            quantity: -item.quantity,
-            orderId,
-            userId: session?.user?.id,
-          })),
-        });
-        await sendOrderEmail(orderId, "PAYMENT_APPROVED");
+        if (marked.count === 1) {
+          await prisma.inventoryMovement.createMany({
+            data: cartWithItems.items.map((item) => ({
+              variantId: item.variant.id,
+              type: "SALE" as const,
+              quantity: -item.quantity,
+              orderId,
+              userId: session?.user?.id,
+            })),
+          });
+          await sendOrderEmail(orderId, "PAYMENT_APPROVED");
+        }
       }
     }
-  } catch {
-    // Pagamento falhou ao processar (ex.: provider indisponível) — o pedido continua criado
-    // como PENDING_PAYMENT; a página de confirmação orienta o cliente a tentar novamente.
+  } catch (error) {
+    // Pagamento falhou ao processar (ex.: provider indisponível ou chamada expirada) — o pedido
+    // continua criado como PENDING_PAYMENT. Sempre registra o erro: sem isso um pagamento aprovado
+    // mas não gravado passa despercebido (aconteceu com o pedido FA-2026-000006).
+    console.error(`[checkout] Falha ao processar pagamento do pedido ${orderNumber}:`, error);
+
+    // Tentativa de recuperação: se o provider chegou a criar o pagamento, vincula agora ao pedido.
+    if (data.paymentMethod !== "CASH") {
+      try {
+        const found = await getPaymentProvider().findPaymentsByReference(orderNumber);
+        for (const details of found) await processProviderPayment(details);
+      } catch (recoveryError) {
+        console.error(`[checkout] Recuperação do pagamento do pedido ${orderNumber} também falhou:`, recoveryError);
+      }
+    }
   }
 
   if (paymentDeclined) {

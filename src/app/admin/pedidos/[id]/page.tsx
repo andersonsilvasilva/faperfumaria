@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getOrderForAdmin } from "@/modules/admin/orders-queries";
 import { OrderStatusForm } from "@/components/admin/orders/order-status-form";
+import { ReconcilePaymentButton } from "@/components/admin/orders/reconcile-payment-button";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/format";
 import { ORDER_STATUS_LABELS, SHIPPING_METHOD_LABELS } from "@/lib/labels";
@@ -27,6 +28,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   if (!order) notFound();
 
   const hasAddress = order.shippingMethod !== "LOCAL_PICKUP";
+  const canVerifyPayment = order.status === "PENDING_PAYMENT" && !order.payments.some((p) => p.method === "CASH");
   const canConfirmCashPayment = order.payments.some((p) => p.method === "CASH" && p.status === "PENDING");
 
   return (
@@ -119,7 +121,11 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                   </span>
                 </div>
               ))}
+              {order.payments.length === 0 && (
+                <p className="text-sm text-fa-black/50">Nenhum pagamento registrado para este pedido.</p>
+              )}
             </div>
+            {canVerifyPayment && <ReconcilePaymentButton orderId={order.id} />}
           </section>
         </div>
 

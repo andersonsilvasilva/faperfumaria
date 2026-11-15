@@ -36,10 +36,25 @@ export interface CreateCardPaymentResult {
   status: PaymentProviderStatus;
 }
 
+/** Dados de um pagamento como o provider o conhece (usado por webhook e verificação manual). */
+export interface ProviderPaymentDetails {
+  externalId: string;
+  status: PaymentProviderStatus;
+  /** Número do pedido enviado na criação do pagamento (external_reference). */
+  externalReference?: string;
+  amount: number;
+  method: "PIX" | "CARD";
+  installments?: number;
+}
+
 export interface PaymentProvider {
   readonly name: string;
   createPixPayment(input: CreatePixPaymentInput): Promise<CreatePixPaymentResult>;
   createCardPayment(input: CreateCardPaymentInput): Promise<CreateCardPaymentResult>;
   getPaymentStatus(externalId: string): Promise<PaymentProviderStatus>;
+  /** Detalhes de um pagamento, ou null se o provider não o conhece. */
+  getPaymentDetails(externalId: string): Promise<ProviderPaymentDetails | null>;
+  /** Pagamentos criados para um pedido (pela external_reference = número do pedido). */
+  findPaymentsByReference(reference: string): Promise<ProviderPaymentDetails[]>;
   refundPayment(externalId: string): Promise<void>;
 }

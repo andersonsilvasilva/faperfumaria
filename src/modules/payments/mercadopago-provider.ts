@@ -7,6 +7,7 @@ import type {
   CreatePixPaymentResult,
   PaymentProvider,
   PaymentProviderStatus,
+  ProviderPaymentDetails,
 } from "@/modules/payments/types";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -31,6 +32,28 @@ function mapStatus(mpStatus: string | undefined): PaymentProviderStatus {
   }
 }
 
+interface MercadoPagoPaymentLike {
+  id?: number | string;
+  status?: string;
+  external_reference?: string;
+  transaction_amount?: number;
+  payment_type_id?: string;
+  payment_method_id?: string;
+  installments?: number;
+}
+
+function toDetails(p: MercadoPagoPaymentLike): ProviderPaymentDetails {
+  const isPix = p.payment_method_id === "pix" || p.payment_type_id === "bank_transfer";
+  return {
+    externalId: String(p.id),
+    status: mapStatus(p.status),
+    externalReference: p.external_reference || undefined,
+    amount: Number(p.transaction_amount ?? 0),
+    method: isPix ? "PIX" : "CARD",
+    installments: p.installments && p.installments > 0 ? p.installments : undefined,
+  };
+}
+
 /**
  * Provider real do Mercado Pago. As credenciais em .env são de PRODUÇÃO — nunca chamar este
  * provider em testes automatizados. Ver docs/integrations.md.
@@ -41,7 +64,7 @@ export class MercadoPagoProvider implements PaymentProvider {
   private readonly refund: PaymentRefund;
 
   constructor(accessToken: string) {
-    const client = new MercadoPagoConfig({ accessToken, options: { timeout: 8000 } });
+    const client = new MercadoPagoConfig({ accessToken, options: { timeout: 40000 } });
     this.payment = new Payment(client);
     this.refund = new PaymentRefund(client);
   }
@@ -96,6 +119,25 @@ export class MercadoPagoProvider implements PaymentProvider {
   async getPaymentStatus(externalId: string): Promise<PaymentProviderStatus> {
     const result = await this.payment.get({ id: externalId });
     return mapStatus(result.status);
+  }
+
+  async getPaymentDetails(externalId: string): Promise<ProviderPaymentDetails | null> {
+    try {
+      const result = await this.payment.get({ id: externalId });
+      return result.id ? toDetails(result) : null;
+    } catch (error) {
+      // 404 = id que o Mercado Pago não conhece (ex.: "Simular notificação" do painel).
+      const status = (error as { status?: number })?.status;
+      if (status === 404) return null;
+      throw error;
+    }
+  }
+
+  async findPaymentsByReference(reference: string): Promise<ProviderPaymentDetails[]> {
+    const result = await this.payment.search({
+      options: { external_reference: reference, sort: "date_created", criteria: "desc" },
+    });
+    return (result.results ?? []).filter((p) => p.id).map(toDetails);
   }
 
   async refundPayment(externalId: string): Promise<void> {

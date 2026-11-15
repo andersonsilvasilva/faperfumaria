@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { WebhookSignatureValidator, InvalidWebhookSignatureError } from "mercadopago";
-import { prisma } from "@/lib/prisma";
 import { getPaymentProvider } from "@/modules/payments";
-import { sendOrderEmail } from "@/modules/email/send-order-email";
+import { processProviderPayment } from "@/modules/payments/reconcile";
 
 /**
  * Webhook de notificações do Mercado Pago. Só faz efeito quando PAYMENT_PROVIDER=mercadopago
@@ -37,64 +36,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "data.id ausente" }, { status: 400 });
   }
 
-  const payment = await prisma.payment.findFirst({ where: { externalId: dataId } });
-  if (!payment) {
-    // Notificação para um pagamento que não reconhecemos (inclui os testes de "Simular
-    // notificações" do painel do MP, que usam um id fictício) — responde 200 sem consultar a
-    // API do MP, para não reenviar nem lançar erro por um id que nunca vai existir lá.
+  const provider = getPaymentProvider();
+  const details = await provider.getPaymentDetails(dataId);
+  if (!details) {
+    // Id que o Mercado Pago não conhece (inclui os testes de "Simular notificações" do painel,
+    // que usam um id fictício) — responde 200 para não gerar reenvio nem erro.
     return NextResponse.json({ received: true });
   }
 
-  const provider = getPaymentProvider();
-  const status = await provider.getPaymentStatus(dataId);
-
-  const mappedStatus =
-    status === "APPROVED" ? "APPROVED" : status === "REJECTED" ? "REJECTED" : status === "REFUNDED" ? "REFUNDED" : status === "CANCELLED" ? "CANCELLED" : "PENDING";
-
-  await prisma.payment.update({ where: { id: payment.id }, data: { status: mappedStatus } });
-
-  if (mappedStatus === "APPROVED") {
-    const order = await prisma.order.findUnique({ where: { id: payment.orderId }, include: { items: true } });
-    if (order && order.status === "PENDING_PAYMENT") {
-      await prisma.$transaction([
-        prisma.order.update({ where: { id: order.id }, data: { status: "PAID", paidAt: new Date() } }),
-        prisma.inventoryMovement.createMany({
-          data: order.items.map((item) => ({
-            variantId: item.variantId,
-            type: "SALE" as const,
-            quantity: -item.quantity,
-            orderId: order.id,
-          })),
-        }),
-      ]);
-      await sendOrderEmail(order.id, "PAYMENT_APPROVED");
-    }
-  } else if (mappedStatus === "REJECTED" || mappedStatus === "CANCELLED") {
-    // Pagamento recusado/cancelado antes de ser aprovado — libera a reserva de estoque feita
-    // na criação do pedido (ver InventoryMovementType.RELEASE) e avisa o cliente por e-mail.
-    const order = await prisma.order.findUnique({ where: { id: payment.orderId }, include: { items: true } });
-    if (order && order.status === "PENDING_PAYMENT") {
-      const newStatus = mappedStatus === "REJECTED" ? "PAYMENT_FAILED" : "CANCELLED";
-      await prisma.$transaction([
-        prisma.order.update({ where: { id: order.id }, data: { status: newStatus } }),
-        ...order.items.map((item) =>
-          prisma.productVariant.update({
-            where: { id: item.variantId },
-            data: { stockQty: { increment: item.quantity } },
-          }),
-        ),
-        prisma.inventoryMovement.createMany({
-          data: order.items.map((item) => ({
-            variantId: item.variantId,
-            type: "RELEASE" as const,
-            quantity: item.quantity,
-            orderId: order.id,
-          })),
-        }),
-      ]);
-      await sendOrderEmail(order.id, mappedStatus === "REJECTED" ? "PAYMENT_FAILED" : "CANCELLED");
-    }
-  }
+  // Também reconhece pagamentos que não chegaram a ser gravados por nós (ex.: a nossa chamada
+  // expirou depois de o Mercado Pago aprovar), ligando-os ao pedido pela external_reference.
+  await processProviderPayment(details);
 
   return NextResponse.json({ received: true });
 }

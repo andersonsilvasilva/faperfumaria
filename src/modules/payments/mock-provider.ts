@@ -8,6 +8,7 @@ import type {
   CreatePixPaymentResult,
   PaymentProvider,
   PaymentProviderStatus,
+  ProviderPaymentDetails,
 } from "@/modules/payments/types";
 
 /**
@@ -40,6 +41,14 @@ export class MockPaymentProvider implements PaymentProvider {
 
   async getPaymentStatus(): Promise<PaymentProviderStatus> {
     return "PENDING";
+  }
+
+  async getPaymentDetails(): Promise<ProviderPaymentDetails | null> {
+    return null;
+  }
+
+  async findPaymentsByReference(): Promise<ProviderPaymentDetails[]> {
+    return [];
   }
 
   async refundPayment(): Promise<void> {
